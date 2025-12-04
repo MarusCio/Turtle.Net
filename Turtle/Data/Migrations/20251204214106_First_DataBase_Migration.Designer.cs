@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Turtle.Data;
 
@@ -11,9 +12,11 @@ using Turtle.Data;
 namespace Turtle.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251204214106_First_DataBase_Migration")]
+    partial class First_DataBase_Migration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -279,6 +282,29 @@ namespace Turtle.Data.Migrations
                     b.ToTable("Communities");
                 });
 
+            modelBuilder.Entity("Turtle.Models.Follower", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FollowerId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("FollowingId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id", "FollowerId", "FollowingId");
+
+                    b.HasIndex("FollowerId");
+
+                    b.HasIndex("FollowingId");
+
+                    b.ToTable("Followers");
+                });
+
             modelBuilder.Entity("Turtle.Models.UserCommunity", b =>
                 {
                     b.Property<int>("Id")
@@ -368,6 +394,25 @@ namespace Turtle.Data.Migrations
                     b.Navigation("Creator");
                 });
 
+            modelBuilder.Entity("Turtle.Models.Follower", b =>
+                {
+                    b.HasOne("Turtle.Models.ApplicationUser", "FollowerUser")
+                        .WithMany("Followers")
+                        .HasForeignKey("FollowerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Turtle.Models.ApplicationUser", "FollowingUser")
+                        .WithMany("Following")
+                        .HasForeignKey("FollowingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FollowerUser");
+
+                    b.Navigation("FollowingUser");
+                });
+
             modelBuilder.Entity("Turtle.Models.UserCommunity", b =>
                 {
                     b.HasOne("Turtle.Models.Community", "Community")
@@ -389,6 +434,10 @@ namespace Turtle.Data.Migrations
 
             modelBuilder.Entity("Turtle.Models.ApplicationUser", b =>
                 {
+                    b.Navigation("Followers");
+
+                    b.Navigation("Following");
+
                     b.Navigation("UserCommunities");
                 });
 
