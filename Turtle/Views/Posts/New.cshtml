@@ -1,0 +1,56 @@
+﻿@model Turtle.Models.Post
+
+
+<h2 class="text-center mt-5">Create Post</h2>
+
+<br />
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-6 offset-3">
+
+            <form method="post" asp-action="New" asp-controller="Posts">
+                <input type="hidden" asp-for="UserId" value="Pending" />
+
+                <div class="form-group">
+                    <label asp-for="Title" class="form-label">Post Title</label>
+                    <br />
+                    <input asp-for="Title" class="form-control" required />
+
+                    <!-- Mesaj de validare pentru titlu -->
+                    <span asp-validation-for="Title" class="text-danger"></span>
+
+                    <br /><br />
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Content" class="form-label">Post Content</label>
+                    <br />
+                    <textarea asp-for="Content" class="form-control"></textarea>
+
+                    <!-- Mesaj de validare pentru continut -->
+                    <span asp-validation-for="Content" class="text-danger"></span>
+
+                    <br /><br />
+                </div>
+
+                <div class="form-group">
+                    <label for="CommunityId">Choose Community</label>
+                    <br />
+                    <select asp-for="CommunityId" asp-items="Model.AvailableCommunities" class="form-control">
+                        <option value="">Choose Community</option>
+                    </select>
+
+                    <!-- Mesaj de validare pentru CommunityId -->
+                    <span asp-validation-for="CommunityId" class="text-danger"></span>
+
+                    <br />
+                </div>
+                <br />
+                <button class="btn btn-success" type="submit">Add Post</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+

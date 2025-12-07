@@ -14,7 +14,7 @@ namespace Turtle.Data
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
         public DbSet<Community> Communities { get; set; }
         public DbSet<UserCommunity> UserCommunities { get; set; }
-
+        public DbSet<Post> Posts { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

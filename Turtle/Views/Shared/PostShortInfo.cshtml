@@ -1,0 +1,27 @@
+﻿@model Turtle.Models.Post
+
+
+<div class="card-body">
+    <a asp-controller="Posts" asp-action="Show" asp-route-id="@Model.Id">
+        <h3 class="card-title alert-success py-3 px-3 rounded-2">@Model.Title</h3>
+    </a>
+
+    <div class="d-flex justify-content-between flex-row">
+        <div><i class="bi bi-person-circle"></i> @Model.User.UserName</div>
+
+        @if (Model.CommunityId != null)
+        {
+            <div><i class="bi bi-building"></i>@Model.Community.CommunityName</div>
+        }
+
+        <div><i class="bi bi-calendar"></i>@Model.CreatedAt</div>
+    </div>
+
+    <br />
+
+    <div class="card-text text-truncate">@Model.Content</div>
+    
+    <br />
+    
+    <div><i class="bi bi-heart-fill"></i> @Model.Likes </div> 
+</div>
