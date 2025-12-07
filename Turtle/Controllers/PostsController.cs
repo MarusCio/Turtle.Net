@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -50,30 +51,28 @@ namespace Turtle.Controllers
 
         public IActionResult Show(int id)
         {
-            Post? post;
-            do
-            {
-                post = db.Posts.Where(p => p.Id == id).FirstOrDefault();
-            } while (post != null && post.MotherPostId != null);
 
-            post = db.Posts
-                .Include(p => p.User)
-                .Include(p => p.Community)
-                .Include(p => p.PostCategories)
-                    .ThenInclude(pc => pc.Category)
-                .Where(p => p.Id == id)
-                .FirstOrDefault();
-            
+            Post? post = db.Posts.Where(p => p.Id == id).FirstOrDefault();
+            while (post != null && post.MotherPostId != null)
+            {
+
+                id = (int)post.MotherPostId;
+                post = db.Posts.Where(p => p.Id == id).FirstOrDefault();
+            }
+
+            post = LoadPostTree(id);
+
             if (post is null)
                 return NotFound();
 
+            post.Liked = IsPostLiked(id);
+
+            post.Liked = IsPostLiked(id);
             if (TempData.ContainsKey("message"))
             {
                 ViewBag.Message = TempData["message"];
                 ViewBag.Alert = TempData["messageType"];
             }
-
-            post.Liked = IsPostLiked(id);
 
             return View(post);
         }
@@ -247,6 +246,42 @@ namespace Turtle.Controllers
             }
 
             return selectList;
+        }
+        [NonAction]
+        private Post? LoadPostTree (int id)
+        {
+            Post? post = db.Posts
+                .Include(p => p.User)
+                .Include(p => p.Community)
+                .Include(p => p.PostCategories)
+                    .ThenInclude(pc => pc.Category)
+                .Where(p => p.Id == id)
+                .FirstOrDefault();
+
+            LoadComments(post);
+
+            return post;
+        }
+
+        [NonAction]
+        private void LoadComments(Post? post)
+        {
+            if (post is null)
+                return;
+
+            var comments = db.Posts
+                .Include(p => p.User)
+                .Where(p => p.MotherPostId == post.Id)
+                .OrderByDescending(p => p.Likes)
+                .ToList();
+
+            post.Comments = comments;
+
+            foreach (var comment in comments)
+            {
+                comment.Liked = IsPostLiked(comment.Id);
+                LoadComments(comment);
+            }
         }
     }
 }

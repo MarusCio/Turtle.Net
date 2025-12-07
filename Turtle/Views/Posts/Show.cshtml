@@ -5,10 +5,10 @@
     <h2 class="p-3 rounded-3 text-center mb-5 alert @ViewBag.Alert">@ViewBag.Message</h2>
 }
 
-<div class="card">
-    
-    <partial name="PostInfo" model="@Model"></partial>
-    
+<div>
+
+    <partial name="RecursiveComments" model="@Model" />
+
 </div>
 
 @* 

@@ -2,7 +2,7 @@
 
 
 <div class="card-body">
-    @if (Model.MotherPostId == null) {
+    @if (Model.MotherPostId is null ) {
         <h3 class="card-title alert-success py-3 px-3 rounded-2">@Model.Title</h3>
     
         <div class="mb-3">
@@ -16,8 +16,7 @@
     <div class="d-flex justify-content-between flex-row">
         <div><i class="bi bi-person-circle"></i> @Model.User.UserName</div>
 
-        @if (Model.CommunityId != null)
-        {
+        @if (Model.MotherPostId == null && Model.CommunityId != null) {
             <div><i class="bi bi-building"></i>@Model.Community.CommunityName</div>
         }
 
