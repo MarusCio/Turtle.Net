@@ -2,8 +2,15 @@
 
 
 <div class="card-body">
-    @if (Model.Title != null) {
+    @if (Model.MotherPostId == null) {
         <h3 class="card-title alert-success py-3 px-3 rounded-2">@Model.Title</h3>
+    
+        <div class="mb-3">
+            @foreach (var postCat in Model.PostCategories)
+            {
+                <span class="badge bg-secondary me-1">#@postCat.Category.CategoryName</span>
+            }
+        </div>
     }
 
     <div class="d-flex justify-content-between flex-row">
@@ -23,5 +30,19 @@
     
     <br />
     
-    <div><i class="bi bi-heart-fill"></i> @Model.Likes </div> 
+    @if (Model.Liked)
+    {
+        <div>
+            <a asp-controller="Posts" asp-action="AddLike" asp-route-id="@Model.Id" class="text-decoration-none">
+            <i class="bi bi-heart-fill text-danger"></i> </a>@Model.Likes
+        </div>
+    }
+    else
+    {
+        <div>
+            <a asp-controller="Posts" asp-action="AddLike" asp-route-id="@Model.Id" class="text-decoration-none">
+            <i class="bi bi-heart text-danger"></i> </a>@Model.Likes
+        </div>   
+    }
+    
 </div>

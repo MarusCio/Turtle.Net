@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.Build.Framework;
 using Microsoft.EntityFrameworkCore;
 using Turtle.Models;
 namespace Turtle.Data
@@ -15,6 +16,9 @@ namespace Turtle.Data
         public DbSet<Community> Communities { get; set; }
         public DbSet<UserCommunity> UserCommunities { get; set; }
         public DbSet<Post> Posts { get; set; }
+        public DbSet<PostLike> PostLikes { get; set; }
+        public DbSet<PostCategory> PostCategories { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -35,6 +39,36 @@ namespace Turtle.Data
                 .HasOne(uc => uc.Community)
                 .WithMany(c => c.UserCommunities)
                 .HasForeignKey(uc => uc.CommunityId);
+
+            // definirea relatiei many to many dintre user si post-uri (like-uri)
+            builder.Entity<PostLike>()
+                .HasKey(uc => new { uc.Id, uc.UserId, uc.PostId });
+
+            builder.Entity<PostLike>()
+                .HasOne(uc => uc.User)
+                .WithMany(uc => uc.PostsLiked)
+                .HasForeignKey(uc => uc.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<PostLike>()
+                .HasOne(uc => uc.Post)
+                .WithMany(uc => uc.PostLikes)
+                .HasForeignKey(uc => uc.PostId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // definirea relatiet many to many dintre post si category
+            builder.Entity<PostCategory>()
+                .HasKey(pc => new { pc.Id, pc.PostId, pc.CategoryId });
+
+            builder.Entity<PostCategory>()
+                .HasOne(uc => uc.Post)
+                .WithMany(uc => uc.PostCategories)
+                .HasForeignKey(uc => uc.PostId);
+
+            builder.Entity<PostCategory>()
+                .HasOne(uc => uc.Category)
+                .WithMany(uc => uc.PostsCategory)
+                .HasForeignKey(uc => uc.CategoryId);
         }
 
     }

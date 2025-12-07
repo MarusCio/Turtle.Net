@@ -10,7 +10,9 @@ namespace Turtle.Models
         public DateTime? CreatedAt { get; set; } = DateTime.Now;
 
         public DateTime? DateOfBirth { get; set; }
+
         public virtual ICollection<UserCommunity> UserCommunities { get; set; } = [];
+        public virtual ICollection<PostLike> PostsLiked { get; set; } = []; 
 
         [NotMapped]
         public List<string> Followers { get; set; } = [];

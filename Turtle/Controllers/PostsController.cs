@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Turtle.Data;
 using Turtle.Models;
 
@@ -27,6 +28,8 @@ namespace Turtle.Controllers
             var posts = db.Posts
                 .Include(p => p.User)
                 .Include(p => p.Community)
+                .Include(p => p.PostCategories)
+                    .ThenInclude(pc => pc.Category)
                 .Where(p => p.MotherPostId == null)
                 .OrderByDescending(p => p.CreatedAt);
 
@@ -38,14 +41,26 @@ namespace Turtle.Controllers
                 ViewBag.Alert = TempData["messageType"];
             }
 
+            foreach (var post in posts) {
+                post.Liked = IsPostLiked(post.Id);
+            }
+
             return View();
         }
 
         public IActionResult Show(int id)
         {
-            Post? post = db.Posts
+            Post? post;
+            do
+            {
+                post = db.Posts.Where(p => p.Id == id).FirstOrDefault();
+            } while (post != null && post.MotherPostId != null);
+
+            post = db.Posts
                 .Include(p => p.User)
                 .Include(p => p.Community)
+                .Include(p => p.PostCategories)
+                    .ThenInclude(pc => pc.Category)
                 .Where(p => p.Id == id)
                 .FirstOrDefault();
             
@@ -58,52 +73,135 @@ namespace Turtle.Controllers
                 ViewBag.Alert = TempData["messageType"];
             }
 
+            post.Liked = IsPostLiked(id);
+
             return View(post);
         }
 
         [HttpGet]
         public IActionResult New()
         {
-            Post post = new Post();
+            PostForm post = new PostForm();
 
             post.AvailableCommunities = getAvailableCommunities();
+            post.AvailableCategories = getAvailableCategories();
 
             return View(post);
         }
 
-        [HttpPost]
-        public IActionResult New(Post post)
+        public IActionResult AddLike(int Id)
         {
-            post.CreatedAt = DateTime.Now;
-            post.Likes = 0;
-            post.UserId = _userManager.GetUserId(User);
+            Post? post = db.Posts.Where(p => p.Id == Id).FirstOrDefault();
 
-            Debug.WriteLine("HERE\n");
+            if (post is null)
+                return NotFound();
 
-            if (post.Title is null)
+            PostLike? post_like = db.PostLikes
+                .Where(p => p.UserId == _userManager.GetUserId(User) && p.PostId == Id)
+                .FirstOrDefault();
+
+            if (post_like is null)
+            {
+                post_like = new PostLike();
+
+                post_like.PostId = Id;
+                post_like.UserId = _userManager.GetUserId(User);
+                post_like.LikedAt = DateTime.Now;
+
+                post.Likes++;
+
+                if (ModelState.IsValid)
+                {
+                    db.PostLikes.Add(post_like);
+                    db.Posts.Update(post);
+                    db.SaveChanges();
+                }
+                else
+                {
+                    TempData["message"] = "Cannot like current post!";
+                    TempData["messageType"] = "alert-danger";
+                }
+            }
+            else
+            {
+                post.Likes--;
+
+                if (ModelState.IsValid)
+                {
+                    db.PostLikes.Remove(post_like);
+                    db.Posts.Update(post);
+                    db.SaveChanges();
+                }
+                else
+                {
+
+                    TempData["message"] = "Cannot unlike current post!";
+                    TempData["messageType"] = "alert-danger";
+                }
+            }
+
+            return RedirectToAction("Show", new { id = Id });
+        }
+
+        [HttpPost]
+        public IActionResult New([FromForm] PostForm postForm)
+        {
+            if (postForm.Title is null)
             {
                 ModelState.AddModelError("Title", "The Title Field is required!");
-                post.AvailableCommunities = getAvailableCommunities();
-                return View(post);
+                postForm.AvailableCommunities = getAvailableCommunities();
+                postForm.AvailableCategories = getAvailableCategories();
+                return View(postForm);
             }
             else
                 ModelState.Remove("Title");
+
+            Post post = new Post();
+            post.Title = postForm.Title;
+            post.Content = postForm.Content;
+            post.CommunityId = postForm.CommunityId;
+            post.CreatedAt = DateTime.Now;
+            post.Likes = 0;
+            post.UserId = _userManager.GetUserId(User);
 
             if (ModelState.IsValid)
             {
                 db.Posts.Add(post);
                 db.SaveChanges();
+
+                foreach (var cat in postForm.SelectedCategoryIds)
+                {
+                    PostCategory pc = new PostCategory();
+                    pc.PostId = post.Id;
+                    pc.CategoryId = cat;
+
+                    db.PostCategories.Add(pc);
+                }
+                db.SaveChanges();
+
                 TempData["message"] = "New post created";
                 TempData["messageType"] = "alert-success";
                 return RedirectToAction("Index");
             }
             else
             {
-                post.AvailableCommunities = getAvailableCommunities();
+                postForm.AvailableCommunities = getAvailableCommunities();
+                postForm.AvailableCategories = getAvailableCategories();
                 return View(post);
             }
         }
 
+        [NonAction]
+        private bool IsPostLiked(int Id)
+        {
+            PostLike? post_like = db.PostLikes
+                .Where(p => p.PostId == Id && p.UserId == _userManager.GetUserId(User))
+                .FirstOrDefault();
+
+            if (post_like == null)
+                return false;
+            return true;
+        }
         [NonAction]
         private IEnumerable<SelectListItem> getAvailableCommunities()
         {
@@ -126,6 +224,25 @@ namespace Turtle.Controllers
                 {
                     Value = community.Id.ToString(),
                     Text = community.CommunityName
+                });
+            }
+
+            return selectList;
+        }
+        [NonAction]
+        private IEnumerable<SelectListItem> getAvailableCategories()
+        {
+            var selectList = new List<SelectListItem>();
+
+            var categories = from cat in db.Categories
+                             select cat;
+
+            foreach (var category in categories)
+            {
+                selectList.Add(new SelectListItem
+                {
+                    Value = category.Id.ToString(),
+                    Text = category.CategoryName
                 });
             }
 

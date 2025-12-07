@@ -1,4 +1,4 @@
-﻿@model Turtle.Models.Post
+﻿@model Turtle.Models.PostForm
 
 
 <h2 class="text-center mt-5">Create Post</h2>
@@ -10,8 +10,6 @@
         <div class="col-6 offset-3">
 
             <form method="post" asp-action="New" asp-controller="Posts">
-                <input type="hidden" asp-for="UserId" value="Pending" />
-
                 <div class="form-group">
                     <label asp-for="Title" class="form-label">Post Title</label>
                     <br />
@@ -35,6 +33,22 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="SelectedCategoryId">Choose Categories</label>
+                    <br />
+                    @foreach (var cat in Model.AvailableCategories)
+                    {
+                        <div class="form-check">
+                            <input type="checkbox"
+                                   name="SelectedCategoryIds"
+                                   value="@cat.Value"
+                                   class="form-check-input" />
+                            <label class="form-check-label">@cat.Text</label>
+                        </div>
+                    }
+                    <br />
+                </div>
+
+                <div class="form-group">
                     <label for="CommunityId">Choose Community</label>
                     <br />
                     <select asp-for="CommunityId" asp-items="Model.AvailableCommunities" class="form-control">
@@ -52,5 +66,3 @@
         </div>
     </div>
 </div>
-
-

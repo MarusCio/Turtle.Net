@@ -31,8 +31,10 @@ namespace Turtle.Models
         public virtual ICollection<Post> Comments { get; set;  } = [];
 
 
+        public virtual ICollection<PostLike> PostLikes { get; set; } = [];
+        public virtual ICollection<PostCategory> PostCategories { get; set; } = [];
+        
         [NotMapped]
-        public IEnumerable<SelectListItem> AvailableCommunities { get; set; } = [];
-
+        public bool Liked { get; set; }
     }
 }
