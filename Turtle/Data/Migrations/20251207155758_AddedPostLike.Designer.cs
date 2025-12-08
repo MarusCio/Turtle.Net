@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Turtle.Data;
 
@@ -11,9 +12,11 @@ using Turtle.Data;
 namespace Turtle.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251207155758_AddedPostLike")]
+    partial class AddedPostLike
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -321,29 +324,6 @@ namespace Turtle.Data.Migrations
                     b.ToTable("Posts");
                 });
 
-            modelBuilder.Entity("Turtle.Models.PostCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id", "PostId", "CategoryId");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("PostCategories");
-                });
-
             modelBuilder.Entity("Turtle.Models.PostLike", b =>
                 {
                     b.Property<int>("Id")
@@ -482,25 +462,6 @@ namespace Turtle.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Turtle.Models.PostCategory", b =>
-                {
-                    b.HasOne("Turtle.Models.Category", "Category")
-                        .WithMany("PostsCategory")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Turtle.Models.Post", "Post")
-                        .WithMany("PostCategories")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Post");
-                });
-
             modelBuilder.Entity("Turtle.Models.PostLike", b =>
                 {
                     b.HasOne("Turtle.Models.Post", "Post")
@@ -546,11 +507,6 @@ namespace Turtle.Data.Migrations
                     b.Navigation("UserCommunities");
                 });
 
-            modelBuilder.Entity("Turtle.Models.Category", b =>
-                {
-                    b.Navigation("PostsCategory");
-                });
-
             modelBuilder.Entity("Turtle.Models.Community", b =>
                 {
                     b.Navigation("UserCommunities");
@@ -559,8 +515,6 @@ namespace Turtle.Data.Migrations
             modelBuilder.Entity("Turtle.Models.Post", b =>
                 {
                     b.Navigation("Comments");
-
-                    b.Navigation("PostCategories");
 
                     b.Navigation("PostLikes");
                 });

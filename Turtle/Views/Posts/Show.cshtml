@@ -1,0 +1,16 @@
+﻿@model Turtle.Models.Post
+
+@if(ViewBag.Message != null){
+
+    <h2 class="p-3 rounded-3 text-center mb-5 alert @ViewBag.Alert">@ViewBag.Message</h2>
+}
+
+<div>
+
+    <partial name="RecursiveComments" model="@Model" />
+
+</div>
+
+@* 
+    De aici adaugma toate comentariile in mod recursiv
+*@

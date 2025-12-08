@@ -1,0 +1,24 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+
+<h2 class="text-center"> Posts </h2>
+
+@if(ViewBag.Message != null){
+
+    <h2 class="p-3 rounded-3 text-center mb-5 alert @ViewBag.Alert">@ViewBag.Message</h2>
+}
+
+<a class="btn btn-success" asp-controller="Posts" asp-action="New">Create Post</a>
+
+@foreach (var post in ViewBag.Posts)
+{
+    <div class="card">
+
+        <partial name="PostShortInfo" model="post"></partial>
+
+    </div>
+
+    <br />
+    <br />
+}

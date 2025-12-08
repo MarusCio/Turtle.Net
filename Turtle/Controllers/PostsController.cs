@@ -1,0 +1,287 @@
+﻿using Humanizer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using Turtle.Data;
+using Turtle.Models;
+
+namespace Turtle.Controllers
+{
+    public class PostsController: Controller
+    {
+        private readonly ApplicationDbContext db;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+
+        public PostsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        {
+            db = context;
+            _userManager = userManager;
+            _roleManager = roleManager;
+        }
+
+        public IActionResult Index()
+        {
+            var posts = db.Posts
+                .Include(p => p.User)
+                .Include(p => p.Community)
+                .Include(p => p.PostCategories)
+                    .ThenInclude(pc => pc.Category)
+                .Where(p => p.MotherPostId == null)
+                .OrderByDescending(p => p.CreatedAt);
+
+            ViewBag.Posts = posts;
+
+            if (TempData.ContainsKey("message"))
+            {
+                ViewBag.Message = TempData["message"];
+                ViewBag.Alert = TempData["messageType"];
+            }
+
+            foreach (var post in posts) {
+                post.Liked = IsPostLiked(post.Id);
+            }
+
+            return View();
+        }
+
+        public IActionResult Show(int id)
+        {
+
+            Post? post = db.Posts.Where(p => p.Id == id).FirstOrDefault();
+            while (post != null && post.MotherPostId != null)
+            {
+
+                id = (int)post.MotherPostId;
+                post = db.Posts.Where(p => p.Id == id).FirstOrDefault();
+            }
+
+            post = LoadPostTree(id);
+
+            if (post is null)
+                return NotFound();
+
+            post.Liked = IsPostLiked(id);
+
+            post.Liked = IsPostLiked(id);
+            if (TempData.ContainsKey("message"))
+            {
+                ViewBag.Message = TempData["message"];
+                ViewBag.Alert = TempData["messageType"];
+            }
+
+            return View(post);
+        }
+
+        [HttpGet]
+        public IActionResult New()
+        {
+            PostForm post = new PostForm();
+
+            post.AvailableCommunities = getAvailableCommunities();
+            post.AvailableCategories = getAvailableCategories();
+
+            return View(post);
+        }
+
+        public IActionResult AddLike(int Id)
+        {
+            Post? post = db.Posts.Where(p => p.Id == Id).FirstOrDefault();
+
+            if (post is null)
+                return NotFound();
+
+            PostLike? post_like = db.PostLikes
+                .Where(p => p.UserId == _userManager.GetUserId(User) && p.PostId == Id)
+                .FirstOrDefault();
+
+            if (post_like is null)
+            {
+                post_like = new PostLike();
+
+                post_like.PostId = Id;
+                post_like.UserId = _userManager.GetUserId(User);
+                post_like.LikedAt = DateTime.Now;
+
+                post.Likes++;
+
+                if (ModelState.IsValid)
+                {
+                    db.PostLikes.Add(post_like);
+                    db.Posts.Update(post);
+                    db.SaveChanges();
+                }
+                else
+                {
+                    TempData["message"] = "Cannot like current post!";
+                    TempData["messageType"] = "alert-danger";
+                }
+            }
+            else
+            {
+                post.Likes--;
+
+                if (ModelState.IsValid)
+                {
+                    db.PostLikes.Remove(post_like);
+                    db.Posts.Update(post);
+                    db.SaveChanges();
+                }
+                else
+                {
+
+                    TempData["message"] = "Cannot unlike current post!";
+                    TempData["messageType"] = "alert-danger";
+                }
+            }
+
+            return RedirectToAction("Show", new { id = Id });
+        }
+
+        [HttpPost]
+        public IActionResult New([FromForm] PostForm postForm)
+        {
+            if (postForm.Title is null)
+            {
+                ModelState.AddModelError("Title", "The Title Field is required!");
+                postForm.AvailableCommunities = getAvailableCommunities();
+                postForm.AvailableCategories = getAvailableCategories();
+                return View(postForm);
+            }
+            else
+                ModelState.Remove("Title");
+
+            Post post = new Post();
+            post.Title = postForm.Title;
+            post.Content = postForm.Content;
+            post.CommunityId = postForm.CommunityId;
+            post.CreatedAt = DateTime.Now;
+            post.Likes = 0;
+            post.UserId = _userManager.GetUserId(User);
+
+            if (ModelState.IsValid)
+            {
+                db.Posts.Add(post);
+                db.SaveChanges();
+
+                foreach (var cat in postForm.SelectedCategoryIds)
+                {
+                    PostCategory pc = new PostCategory();
+                    pc.PostId = post.Id;
+                    pc.CategoryId = cat;
+
+                    db.PostCategories.Add(pc);
+                }
+                db.SaveChanges();
+
+                TempData["message"] = "New post created";
+                TempData["messageType"] = "alert-success";
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                postForm.AvailableCommunities = getAvailableCommunities();
+                postForm.AvailableCategories = getAvailableCategories();
+                return View(post);
+            }
+        }
+
+        [NonAction]
+        private bool IsPostLiked(int Id)
+        {
+            PostLike? post_like = db.PostLikes
+                .Where(p => p.PostId == Id && p.UserId == _userManager.GetUserId(User))
+                .FirstOrDefault();
+
+            if (post_like == null)
+                return false;
+            return true;
+        }
+        [NonAction]
+        private IEnumerable<SelectListItem> getAvailableCommunities()
+        {
+            // generam o lista de tipul SelectListItem fara elemente
+            var selectList = new List<SelectListItem>();
+
+            var communitiesIds = db.UserCommunities
+                .Where(p => p.UserId == _userManager.GetUserId(User))
+                .Select(p => p.CommunityId);
+
+            var communities = db.Communities
+                .Where(com => communitiesIds.Contains(com.Id));
+
+            // iteram prin categorii
+            foreach (var community in communities)
+            {
+                // adaugam in lista elementele necesare pentru dropdown
+                // id-ul categoriei si denumirea acesteia
+                selectList.Add(new SelectListItem
+                {
+                    Value = community.Id.ToString(),
+                    Text = community.CommunityName
+                });
+            }
+
+            return selectList;
+        }
+        [NonAction]
+        private IEnumerable<SelectListItem> getAvailableCategories()
+        {
+            var selectList = new List<SelectListItem>();
+
+            var categories = from cat in db.Categories
+                             select cat;
+
+            foreach (var category in categories)
+            {
+                selectList.Add(new SelectListItem
+                {
+                    Value = category.Id.ToString(),
+                    Text = category.CategoryName
+                });
+            }
+
+            return selectList;
+        }
+        [NonAction]
+        private Post? LoadPostTree (int id)
+        {
+            Post? post = db.Posts
+                .Include(p => p.User)
+                .Include(p => p.Community)
+                .Include(p => p.PostCategories)
+                    .ThenInclude(pc => pc.Category)
+                .Where(p => p.Id == id)
+                .FirstOrDefault();
+
+            LoadComments(post);
+
+            return post;
+        }
+
+        [NonAction]
+        private void LoadComments(Post? post)
+        {
+            if (post is null)
+                return;
+
+            var comments = db.Posts
+                .Include(p => p.User)
+                .Where(p => p.MotherPostId == post.Id)
+                .OrderByDescending(p => p.Likes)
+                .ToList();
+
+            post.Comments = comments;
+
+            foreach (var comment in comments)
+            {
+                comment.Liked = IsPostLiked(comment.Id);
+                LoadComments(comment);
+            }
+        }
+    }
+}

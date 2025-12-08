@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Turtle.Data;
 
@@ -11,9 +12,11 @@ using Turtle.Data;
 namespace Turtle.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251207120637_CreatedSimplePostModel")]
+    partial class CreatedSimplePostModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -321,55 +324,6 @@ namespace Turtle.Data.Migrations
                     b.ToTable("Posts");
                 });
 
-            modelBuilder.Entity("Turtle.Models.PostCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id", "PostId", "CategoryId");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("PostCategories");
-                });
-
-            modelBuilder.Entity("Turtle.Models.PostLike", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("LikedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id", "UserId", "PostId");
-
-                    b.HasIndex("PostId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PostLikes");
-                });
-
             modelBuilder.Entity("Turtle.Models.UserCommunity", b =>
                 {
                     b.Property<int>("Id")
@@ -482,44 +436,6 @@ namespace Turtle.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Turtle.Models.PostCategory", b =>
-                {
-                    b.HasOne("Turtle.Models.Category", "Category")
-                        .WithMany("PostsCategory")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Turtle.Models.Post", "Post")
-                        .WithMany("PostCategories")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Post");
-                });
-
-            modelBuilder.Entity("Turtle.Models.PostLike", b =>
-                {
-                    b.HasOne("Turtle.Models.Post", "Post")
-                        .WithMany("PostLikes")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("Turtle.Models.ApplicationUser", "User")
-                        .WithMany("PostsLiked")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Post");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Turtle.Models.UserCommunity", b =>
                 {
                     b.HasOne("Turtle.Models.Community", "Community")
@@ -541,14 +457,7 @@ namespace Turtle.Data.Migrations
 
             modelBuilder.Entity("Turtle.Models.ApplicationUser", b =>
                 {
-                    b.Navigation("PostsLiked");
-
                     b.Navigation("UserCommunities");
-                });
-
-            modelBuilder.Entity("Turtle.Models.Category", b =>
-                {
-                    b.Navigation("PostsCategory");
                 });
 
             modelBuilder.Entity("Turtle.Models.Community", b =>
@@ -559,10 +468,6 @@ namespace Turtle.Data.Migrations
             modelBuilder.Entity("Turtle.Models.Post", b =>
                 {
                     b.Navigation("Comments");
-
-                    b.Navigation("PostCategories");
-
-                    b.Navigation("PostLikes");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Turtle.Models
 {
@@ -14,6 +15,6 @@ namespace Turtle.Models
         [Required(ErrorMessage = "NSFW is required!")]
         public bool NSFW { get; set; }
 
-
+        public virtual ICollection<PostCategory> PostsCategory { get; set; } = [];
     }
 }
