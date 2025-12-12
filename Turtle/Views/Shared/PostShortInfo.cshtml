@@ -2,9 +2,25 @@
 
 
 <div class="card-body">
-    <a asp-controller="Posts" asp-action="Show" asp-route-id="@Model.Id">
-        <h3 class="card-title alert-success py-3 px-3 rounded-2">@Model.Title</h3>
-    </a>
+
+    <div class="d-flex justify-content-between flex-row">
+        <a asp-controller="Posts" asp-action="Show" asp-route-id="@Model.Id">
+            <h3 class="card-title alert-success py-3 px-3 rounded-2 text-decoration-none">@Model.Title</h3>
+        </a>
+
+        <div class="dropdown d-inline">
+            <i class="rounded bi bi-three-dots-vertical dropdown-toggle no-arrow option-hover"
+               id="postMenu-@Model.Id"
+               style="cursor:pointer"
+               data-bs-toggle="dropdown"
+               aria-expanded="false">
+            </i>
+            <ul class="dropdown-menu" aria-labelledby="postMenu-@Model.Id">
+                <li><button class="dropdown-item text-info">Edit</button></li>
+                <li><button class="dropdown-item text-danger">Delete</button></li>
+            </ul>
+        </div>
+    </div>
 
     <div class="mb-3">
         @foreach (var postCat in Model.PostCategories)

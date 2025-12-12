@@ -1,4 +1,5 @@
 ﻿using Humanizer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -49,6 +50,7 @@ namespace Turtle.Controllers
             return View();
         }
 
+        [Authorize(Roles = "Admin,User")]
         public IActionResult Show(int id)
         {
 
@@ -66,8 +68,7 @@ namespace Turtle.Controllers
                 return NotFound();
 
             post.Liked = IsPostLiked(id);
-
-            post.Liked = IsPostLiked(id);
+            
             if (TempData.ContainsKey("message"))
             {
                 ViewBag.Message = TempData["message"];
@@ -76,8 +77,51 @@ namespace Turtle.Controllers
 
             return View(post);
         }
+        [HttpPost]
+        [Authorize(Roles = "Admin,User")]
+        public IActionResult Show([FromForm] CommentForm comment) {
+            Post post = db.Posts.Find(comment.MotherPostId);
+
+            if (post is null) return NotFound();
+
+            while (post.MotherPostId is not null)
+            {
+                post = db.Posts.Find(post.MotherPostId);
+            }
+
+            if (post is null) return NotFound();
+
+            Post newComment = new Post();
+            newComment.UserId = _userManager.GetUserId(User);
+            newComment.CreatedAt = DateTime.Now;
+            newComment.CommunityId = post.CommunityId;
+            newComment.Likes = 0;
+            newComment.Title = null;
+            newComment.Content = comment.Content;
+            newComment.MotherPostId = comment.MotherPostId;
+
+            if (ModelState.IsValid)
+            {
+                db.Posts.Add(newComment);
+                db.SaveChanges();
+
+                post = LoadPostTree(post.Id);
+                post.Liked = IsPostLiked(post.Id);
+
+                ViewBag.Message = "New comment added!";
+                ViewBag.Alert = "alert-success";
+            }
+            else
+            {
+                post = LoadPostTree(post.Id);
+                post.Liked = IsPostLiked(post.Id);
+            }
+
+            return View(post);
+        }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,User")]
         public IActionResult New()
         {
             PostForm post = new PostForm();
@@ -88,7 +132,9 @@ namespace Turtle.Controllers
             return View(post);
         }
 
-        public IActionResult AddLike(int Id)
+        [HttpPost]
+        [Authorize(Roles = "Admin,User")]
+        public IActionResult ToggleLike(int Id)
         {
             Post? post = db.Posts.Where(p => p.Id == Id).FirstOrDefault();
 
@@ -98,6 +144,8 @@ namespace Turtle.Controllers
             PostLike? post_like = db.PostLikes
                 .Where(p => p.UserId == _userManager.GetUserId(User) && p.PostId == Id)
                 .FirstOrDefault();
+
+            bool isLike = post_like is null;
 
             if (post_like is null)
             {
@@ -139,10 +187,15 @@ namespace Turtle.Controllers
                 }
             }
 
-            return RedirectToAction("Show", new { id = Id });
+            Post? root = GetRootPost(Id);
+
+            if (root is null) return NotFound();
+
+            return RedirectToAction("Show", new { id = root.Id });
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,User")]
         public IActionResult New([FromForm] PostForm postForm)
         {
             if (postForm.Title is null)
@@ -188,6 +241,36 @@ namespace Turtle.Controllers
                 postForm.AvailableCategories = getAvailableCategories();
                 return View(post);
             }
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin,User")]
+        public IActionResult Delete(int id)
+        {
+            Post? post = db.Posts.Where(p => p.Id == id).FirstOrDefault();
+
+            if (post is null)
+                return NotFound();
+
+            if (post.UserId == _userManager.GetUserId(User) ||
+                User.IsInRole("Admin"))
+            {
+                DeleteComments(id);
+                var postLikes = db.PostLikes.Where(x => x.PostId == id);
+                db.RemoveRange(postLikes);
+                db.Posts.Remove(post);
+                db.SaveChanges();
+
+                TempData["message"] = "Post has been removed!";
+                TempData["messageType"] = "alert-success";
+            }
+            else
+            {
+                TempData["message"] = "You do not have the right to delete the post!";
+                TempData["messageType"] = "alert-danger";
+            }
+
+            return RedirectToAction("Index");
         }
 
         [NonAction]
@@ -281,6 +364,31 @@ namespace Turtle.Controllers
             {
                 comment.Liked = IsPostLiked(comment.Id);
                 LoadComments(comment);
+            }
+        }
+        [NonAction]
+        private Post? GetRootPost (int id)
+        {
+            Post? post = db.Posts.Find(id);
+
+            while (post is not null && post.MotherPostId is not null)
+            {
+                post = db.Posts.Find(post.MotherPostId);
+            }
+
+            return post;
+        }
+        [NonAction]
+        private void DeleteComments(int id)
+        {
+            var comments = db.Posts.Where(p => p.MotherPostId == id);
+
+            foreach (var comment in comments)
+            {
+                DeleteComments(comment.Id);
+                var postlikes = db.PostLikes.Where(x => x.PostId == comment.Id);
+                db.PostLikes.RemoveRange(postlikes);
+                db.Posts.Remove(comment);
             }
         }
     }
