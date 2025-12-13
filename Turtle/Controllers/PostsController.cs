@@ -47,6 +47,8 @@ namespace Turtle.Controllers
                 post.Liked = IsPostLiked(post.Id);
             }
 
+            SetAccessRights();
+
             return View();
         }
 
@@ -74,6 +76,8 @@ namespace Turtle.Controllers
                 ViewBag.Message = TempData["message"];
                 ViewBag.Alert = TempData["messageType"];
             }
+
+            SetAccessRights();
 
             return View(post);
         }
@@ -117,6 +121,7 @@ namespace Turtle.Controllers
                 post.Liked = IsPostLiked(post.Id);
             }
 
+            SetAccessRights();
             return View(post);
         }
 
@@ -273,6 +278,91 @@ namespace Turtle.Controllers
             return RedirectToAction("Index");
         }
 
+        [HttpGet]
+        [Authorize(Roles = "Admin,User")]
+        public IActionResult Edit(int id)
+        {
+            Post? post = db.Posts
+                .Include(p => p.PostCategories)
+                .Where(p => p.Id == id)
+                .FirstOrDefault();
+
+            if (post is null) return NotFound();
+
+            if (post.UserId != _userManager.GetUserId(User) && !User.IsInRole("Admin"))
+            {
+                TempData["message"] = "You do not have permission to edit this post!";
+                TempData["messageType"] = "alert-danger";
+                return RedirectToAction("Show", new { id = id });
+            }
+
+            PostForm postForm = new PostForm();
+            postForm.Title = post.Title;
+            postForm.Content = post.Content;
+            postForm.AvailableCommunities = getAvailableCommunities();
+            postForm.AvailableCategories = getAvailableCategories();
+            postForm.IsRootPost = post.MotherPostId == null;
+            postForm.EditetPostId = post.Id;
+
+            postForm.SelectedCategoryIds = [];
+            foreach (var postCategory in post.PostCategories)
+            {
+                postForm.SelectedCategoryIds.Add((int) postCategory.CategoryId);
+            }
+
+            return View(postForm);
+        }
+
+        [HttpPost]
+        public IActionResult Edit([FromForm] PostForm postForm)
+        {
+            Post? post = db.Posts.Find(postForm.EditetPostId);
+
+            if (post is null)
+                return NotFound();
+
+            if (post.UserId != _userManager.GetUserId(User) && !User.IsInRole("Admin"))
+            {
+                TempData["message"] = "You do not have permission to edit this post!";
+                TempData["messageType"] = "alert-danger";
+                return RedirectToAction("Show", new { id = postForm.EditetPostId });
+            }
+
+            post.Title = postForm.Title;
+            post.Content = postForm.Content;
+
+            if (ModelState.IsValid)
+            {
+                var postCategories = db.PostCategories
+                    .Where(p => p.PostId == post.Id);
+
+                db.PostCategories.RemoveRange(postCategories);
+
+                foreach (var categoryId in postForm.SelectedCategoryIds)
+                {
+                    PostCategory pc = new PostCategory();
+                    pc.PostId = post.Id;
+                    pc.CategoryId = categoryId;
+
+                    db.PostCategories.Add(pc);
+                }
+
+                db.Update(post);
+                db.SaveChanges();
+
+                TempData["message"] = "Post Edited!";
+                TempData["messageType"] = "alert-success";
+            }
+            else
+            {
+                TempData["message"] = "You cannot edit the post!";
+                TempData["messageType"] = "alert-danger";
+                return RedirectToAction("Show", new { id = postForm.EditetPostId });
+            }
+
+            return RedirectToAction("Show", new { id = postForm.EditetPostId });
+        }
+
         [NonAction]
         private bool IsPostLiked(int Id)
         {
@@ -390,6 +480,12 @@ namespace Turtle.Controllers
                 db.PostLikes.RemoveRange(postlikes);
                 db.Posts.Remove(comment);
             }
+        }
+        [NonAction]
+        private void SetAccessRights()
+        {
+            ViewBag.CurrentUserId = _userManager.GetUserId(User);
+            ViewBag.UserIsAdmin = User.IsInRole("Admin");
         }
     }
 }
