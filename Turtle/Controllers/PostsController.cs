@@ -98,7 +98,7 @@ namespace Turtle.Controllers
             Post newComment = new Post();
             newComment.UserId = _userManager.GetUserId(User);
             newComment.CreatedAt = DateTime.Now;
-            newComment.CommunityId = post.CommunityId;
+            newComment.CommunityId = null;
             newComment.Likes = 0;
             newComment.Title = null;
             newComment.Content = comment.Content;
