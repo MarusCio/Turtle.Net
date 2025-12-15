@@ -1,0 +1,151 @@
+﻿@model Turtle.Models.Community
+
+<br />
+
+<div class="card">
+    <div class="container mt-4">
+        <h2>@Model.CommunityName</h2>
+
+        <p>Created by: @Model.Creator.UserName</p>
+
+
+        @if (User.Identity.IsAuthenticated && ViewBag.IsMember == false)
+        {
+            <a class="btn btn-success"
+               asp-action="Join"
+               asp-route-communityId="@Model.Id">
+                Join Community
+            </a>
+        }
+
+        @*if (User.Identity.IsAuthenticated && ViewBag.IsMember)
+        {
+            <a class="btn btn-danger"
+               asp-action="Leave"
+               asp-route-communityId="@Model.Id">
+                Leave Community
+            </a>
+        }*@
+
+        <hr />
+
+        <!--meniu tauri-->
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab"
+                        data-bs-target="#TabPostari" type="button" role="tab">
+                    Posts
+                </button>
+            </li>
+
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab"
+                        data-bs-target="#TabMembrii" type="button" role="tab">
+                    Members
+                </button>
+            </li>
+        </ul>
+
+        
+        <div class="tab-content mt-3">
+
+            <!--tabul pt postari-->
+            <div class="tab-pane fade show active" id="TabPostari" role="tabpanel">
+                <h3>Posts in this community</h3>
+
+                @if (!Model.PostsCommunity.Any())
+                {
+                    <p>This community has no posts yet</p>
+                }
+                else
+                {
+                    foreach (var post in Model.PostsCommunity)
+                    {
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <partial name="PostShortInfo" model="post" />
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <!--tabul pt membrii-->
+            <div class="tab-pane fade" id="TabMembrii" role="tabpanel">
+
+                <!-- DEBUG INFO -->
+                @* <p style="color:red">
+                    Debug:<br />
+                    Logged: @User.Identity.IsAuthenticated <br />
+                    IsMember: @ViewBag.IsMember <br />
+                    CurrentRole: @ViewBag.CurrentRole
+                </p> *@
+
+                @foreach (var member in Model.UserCommunities)
+                {
+                    <div class="card mb-2 p-2">
+
+                        <b>@member.User.UserName</b>
+                        <span class="badge bg-secondary">@member.Role</span>
+
+                        @if (User.Identity.IsAuthenticated && ViewBag.IsMember)
+                        {
+                            CommunityRole currentRole = ViewBag.CurrentRole;
+                            bool canModify = false;
+
+
+                            // Admin poate modifica pe oricine
+                            if (currentRole == CommunityRole.Admin)
+                            {
+                                canModify = true;
+                            }
+
+                            // Moderator poate modifica doar membri
+                            else if (currentRole == CommunityRole.Moderator && member.Role == CommunityRole.Member)
+                            {
+                                canModify = true;
+                            }
+
+
+                            // Nu se poate modifica propriului rol
+                            if (canModify && member.UserId != ViewBag.CurrentUserId)
+                            {
+                                <div class="mt-2">
+                                    <a class="btn btn-sm btn-outline-warning"
+                                    asp-action="ChangeRole"
+                                    asp-route-userCommunityId="@member.Id"
+                                    asp-route-newRole="Moderator">
+                                        Make Moderator
+                                    </a>
+
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                    asp-action="ChangeRole"
+                                    asp-route-userCommunityId="@member.Id"
+                                    asp-route-newRole="Member">
+                                        Make Member
+                                    </a>
+
+                                    <a class="btn btn-sm btn-danger"
+                                    asp-action="KickMember"
+                                    asp-route-userCommunityId="@member.Id">
+                                        Kick
+                                    </a>
+                                </div>
+                            }
+
+                        }
+
+                        <br />
+                        <small>Joined: @member.JoinedAt</small>
+                    </div>
+                }
+            </div>
+
+        </div>
+
+</div>
+
+
+<br />
+<br />
+
