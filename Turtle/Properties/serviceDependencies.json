@@ -6,8 +6,7 @@
     },
     "mssql2": {
       "type": "mssql",
-      "connectionId": "ConnectionStrings:TurtleDB",
-      "dynamicId": null
+      "connectionId": "ConnectionStrings:TurtleDB"
     }
   }
 }

@@ -70,7 +70,7 @@ namespace Turtle.Controllers
                 return NotFound();
 
             post.Liked = IsPostLiked(id);
-            
+
             if (TempData.ContainsKey("message"))
             {
                 ViewBag.Message = TempData["message"];
