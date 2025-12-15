@@ -506,13 +506,13 @@ namespace Turtle.Data.Migrations
                     b.HasOne("Turtle.Models.Post", "Post")
                         .WithMany("PostLikes")
                         .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Turtle.Models.ApplicationUser", "User")
                         .WithMany("PostsLiked")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Post");

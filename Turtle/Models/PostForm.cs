@@ -13,11 +13,14 @@ namespace Turtle.Models
 
         public int? CommunityId { get; set; }
 
-        [NotMapped]
         public IEnumerable<SelectListItem> AvailableCommunities { get; set; } = [];
 
         public List<int> SelectedCategoryIds { get; set; } = [];
 
         public IEnumerable<SelectListItem> AvailableCategories { get; set; } = [];
+
+        public bool? IsRootPost { get; set; }
+
+        public int? EditetPostId { get; set; }
     }
 }

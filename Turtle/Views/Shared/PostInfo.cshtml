@@ -1,47 +1,160 @@
 ﻿@model Turtle.Models.Post
 
-
-<div class="card-body">
-    @if (Model.MotherPostId is null ) {
-        <h3 class="card-title alert-success py-3 px-3 rounded-2">@Model.Title</h3>
-    
-        <div class="mb-3">
-            @foreach (var postCat in Model.PostCategories)
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between flex-row">
+            @if (Model.MotherPostId is null)
             {
-                <span class="badge bg-secondary me-1">#@postCat.Category.CategoryName</span>
+                <h3 class="card-title alert-success py-3 px-3 rounded-2">@Model.Title</h3>
             }
+            else
+            {
+                <div></div>
+            }
+
+            <div class="dropdown d-inline">
+                <i class="rounded bi bi-three-dots-vertical dropdown-toggle no-arrow option-hover"
+                   id="postMenu-@Model.Id"
+                   style="cursor:pointer"
+                   data-bs-toggle="dropdown"
+                   aria-expanded="false">
+                </i>
+
+                @if (ViewBag.CurrentUserId == Model.UserId || ViewBag.UserIsAdmin)
+                {
+                    <ul class="dropdown-menu" aria-labelledby="postMenu-@Model.Id">
+                        @if (ViewBag.CurrentUserId == Model.UserId)
+                        {
+                            <li>
+                                <form method="get" asp-controller="Posts" asp-action="Edit" asp-route-id="@Model.Id">
+
+                                    <button class="dropdown-item text-info">Edit</button>
+
+                                </form>
+                            </li>
+                        }
+                       
+                        <li>
+                            <form method="post" asp-controller="Posts" asp-action="Delete" asp-route-id="@Model.Id">
+
+                                <button class="dropdown-item text-danger">Delete</button>
+
+                            </form>
+                        </li>
+
+                    </ul>
+                }
+            </div>
         </div>
-    }
 
-    <div class="d-flex justify-content-between flex-row">
-        <div><i class="bi bi-person-circle"></i> @Model.User.UserName</div>
-
-        @if (Model.MotherPostId == null && Model.CommunityId != null) {
-            <div><i class="bi bi-building"></i>@Model.Community.CommunityName</div>
+        @if (Model.MotherPostId is null) 
+        {
+            <div class="mb-3">
+                @foreach (var postCat in Model.PostCategories)
+                {
+                    <span class="badge bg-secondary me-1">#@postCat.Category.CategoryName</span>
+                }
+            </div>
         }
 
-        <div><i class="bi bi-calendar"></i>@Model.CreatedAt</div>
-    </div>
 
-    <br />
+        <div class="d-flex justify-content-between flex-row">
+            <div><i class="bi bi-person-circle"></i> @Model.User.UserName</div>
 
-    <div class="card-text">@Model.Content</div>
-    
-    <br />
-    
-    @if (Model.Liked)
-    {
-        <div>
-            <a asp-controller="Posts" asp-action="AddLike" asp-route-id="@Model.Id" class="text-decoration-none">
-            <i class="bi bi-heart-fill text-danger"></i> </a>@Model.Likes
+            @if (Model.MotherPostId == null && Model.CommunityId != null)
+            {
+                <div><i class="bi bi-building"></i>@Model.Community.CommunityName</div>
+            }
+
+            <div><i class="bi bi-calendar"></i>@Model.CreatedAt</div>
         </div>
-    }
-    else
-    {
-        <div>
-            <a asp-controller="Posts" asp-action="AddLike" asp-route-id="@Model.Id" class="text-decoration-none">
-            <i class="bi bi-heart text-danger"></i> </a>@Model.Likes
-        </div>   
-    }
-    
+
+        <br />
+
+        <div class="card-text">@Model.Content</div>
+
+        <br />
+
+        <div class="d-flex justify-content-between flex-row">
+            <div>
+                <i class="bi bi-chat-left-text"
+                   style="cursor:pointer;"
+                   onclick="toggleCommentForm('@Model.Id')"></i>
+
+                <div class="d-inline">
+                    <form asp-action="ToggleLike" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="btn btn-link text-decoration-none p-0">
+                            <i class="@(Model.Liked ? "bi bi-heart-fill text-danger" : "bi bi-heart text-danger")"></i>
+                        </button>
+                    </form>
+                    @Model.Likes
+                </div>
+            </div>
+
+            <div calss = "d-inline">
+                <i id= "arrow-@Model.Id"
+                   class="bi bi-caret-down-fill"
+                   style="cursor:pointer"
+                   onclick="showComments('@Model.Id')"></i>
+                @Model.Comments.Count()
+            </div>
+        </div>
+    </div>
 </div>
+
+<div id="commentForm-@Model.Id" class="comment d-none">
+    <div class="container">
+
+        <div class="row">
+
+            <div class="col-md-2"></div>
+
+            <div class="col-md-8">
+
+                <div class="card">
+
+                    <form method="post" asp-controller="Posts" asp-action="Show">
+
+                        <div class="card-body">
+
+                            <input type="hidden" name="MotherPostId" value="@Model.Id" />
+
+                            <label>Comment Content</label>
+                            <br />
+
+                            <textarea class="form-control" name="Content"></textarea>
+
+                            <span asp-validation-for="Content" class="text-danger"></span>
+                            <br /><br />
+
+                            <button class="btn btn-success " type="submit">Submit Comment</button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-2"></div>
+
+        </div>
+
+    </div>
+</div>
+
+<ul id="comments-of-@Model.Id" class="d-none list-group ms-4">
+	@foreach (var comment in Model.Comments)
+	{
+        <li class="list-group-item">
+		    <partial name="PostInfo" model="comment" />
+        </li>
+	}
+</ul>
+
+@if (@Model.MotherPostId is null)
+{
+    <script src="~/js/PostInfo.js"></script>
+}
