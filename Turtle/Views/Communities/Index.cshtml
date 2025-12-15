@@ -1,0 +1,28 @@
+﻿
+<br />
+<h2 class="text-center">Afisare Comunitati</h2>
+<br />
+
+@if (ViewBag.Message != null)
+{
+
+    <h2 class="p-3 rounded-3 text-center mb-5 alert @ViewBag.Alert">@ViewBag.Message</h2>
+}
+
+<br />
+
+
+@foreach (var community in ViewBag.Communities)
+{
+    <div class="card">
+
+        <partial name="CommunityShortInfo" model="community"></partial>
+
+        <a class="btn btn-success" asp-controller="Communities" asp-action="Show" asp-route-id="@community.Id">Afisare comunitate</a>
+
+    </div>
+
+    <br />
+    <br />
+}
+
