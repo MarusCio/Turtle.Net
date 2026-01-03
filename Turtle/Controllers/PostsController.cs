@@ -43,11 +43,71 @@ namespace Turtle.Controllers
                 ViewBag.Alert = TempData["messageType"];
             }
 
-            foreach (var post in posts) {
-                post.Liked = IsPostLiked(post.Id);
+            var search = "";
+
+            if (Convert.ToString(HttpContext.Request.Query["search"]) != null)
+            {
+                search = Convert.ToString(HttpContext.Request.Query["search"]).Trim(); // eliminam spatiile libere 
+
+                // Cautare in Posts (Title si Content)
+                List<int> postIds = db.Posts
+                                        .Include(p => p.PostCategories)
+                                         .ThenInclude(pc => pc.Category)
+                                        .Where
+                                        (
+                                         p => p.Title.Contains(search) ||
+                                              p.Content.Contains(search)
+                                        ).Select(p => p.Id).ToList();
+
+                for (int i = 0; i < postIds.Count(); i++)
+                    postIds[i] = GetRootPost(postIds[i]).Id;
+
+                List<int> categoryPostIds = db.PostCategories
+                                    .Include(pc => pc.Category)
+                                    .Where(pc => pc.Category.CategoryName.Contains(search))                                    
+                                    .Select(pc => (int) pc.PostId).ToList();
+
+                postIds = postIds.Union(categoryPostIds).ToList();
+                    
+                posts = db.Posts.Where(posts => postIds.Contains(posts.Id))
+                                      .Include(p => p.User)
+                                      .Include(p => p.Community)
+                                      .Include(p => p.PostCategories)
+                                         .ThenInclude(pc => pc.Category)
+                                      .OrderByDescending(p => p.CreatedAt)
+                                      .OrderByDescending(p => p.Likes);
             }
 
+            ViewBag.SearchString = search;
+
+            foreach (var post in posts)      
+                post.Liked = IsPostLiked(post.Id);
+
+
             SetAccessRights();
+
+            int _perPage = 3;
+            int totalItems = posts.Count();
+            var currentPage = Convert.ToInt32(HttpContext.Request.Query["page"]);
+            var offset = 0;
+
+            if (!currentPage.Equals(0)) 
+                offset = (currentPage - 1) * _perPage;
+            
+            var paginatedPosts = posts.Skip(offset).Take(_perPage).ToList();
+
+            ViewBag.lastPage = Math.Ceiling((float)totalItems / (float) _perPage);
+            ViewBag.Posts = paginatedPosts;
+
+
+            if (search != "")
+            {
+                ViewBag.PaginationBaseUrl = "/Posts/Index/?search=" + search + "&page";
+            }
+            else
+            {
+                ViewBag.PaginationBaseUrl = "/Posts/Index/?page";
+            }
 
             return View();
         }
