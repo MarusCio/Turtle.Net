@@ -21,38 +21,108 @@
 
 <a class="btn btn-success" asp-controller="Posts" asp-action="New">Create Post</a>
 
-@foreach (var post in ViewBag.Posts)
-{
-    <div class="card">
+<!--meniu tauri-->
+<ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link @(ViewBag.Tab == "hot" ? "active" : "")" data-bs-toggle="tab"
+                data-bs-target="#TabHotPostari" type="button" role="tab">
+            HotPosts
+        </button>
+    </li>
 
-        <partial name="PostShortInfo" model="post"></partial>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link @(ViewBag.Tab == "rec" ? "active" : "")" data-bs-toggle="tab"
+                data-bs-target="#TabRecPostari" type="button" role="tab">
+            RecentPosts
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content mt-3">
+
+    <!--tabul pt postari-->
+    <div class="tab-pane fade @(ViewBag.Tab == "hot" ? "show active" : "")" id="TabHotPostari" role="tabpanel">
+        <h3>Hottest Posts</h3>
+
+        @foreach (var post in ViewBag.HottestPosts)
+        {
+            <div class="card">
+
+                <partial name="PostShortInfo" model="post"></partial>
+
+            </div>
+
+            <br />
+            <br />
+        }
+
+        <div>
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    <li class="page-item">
+                        <a class="page-link" href="@ViewBag.PaginationBaseUrl&tab=hot&pageR=@ViewBag.RecPage&pageH=1" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    @for (int i = 1; i <= ViewBag.lastHottestPage; i++)
+                    {
+                        <li class="page-item"> <a class="page-link" href="@ViewBag.PaginationBaseUrl&tab=hot&pageR=@ViewBag.RecPage&pageH=@i">@(i)</a> </li>
+
+                    }
+
+                    <li class="page-item">
+                        <a class="page-link" href="@ViewBag.PaginationBaseUrl&tab=hot&pageR=@ViewBag.RecPage&pageH=@(ViewBag.lastHottestPage)" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
 
     </div>
 
-    <br />
-    <br />
-}
+    <!--tabul pt postari-->
+    <div class="tab-pane fade @(ViewBag.Tab == "rec" ? "show active" : "")" " id="TabRecPostari" role="tabpanel">
+        <h3>Recent Posts</h3>
 
-<div>
-    <nav aria-label="Page navigation example">
-        <ul class="pagination">
-            <li class="page-item">
-                <a class="page-link" href="@ViewBag.PaginationBaseUrl=1" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                </a>
-            </li>
+        @foreach (var post in ViewBag.RecentPosts)
+        {
+            <div class="card">
 
-            @for (int i = 1; i <= ViewBag.lastPage; i++)
-            {
-                <li class="page-item"> <a class="page-link" href="@ViewBag.PaginationBaseUrl=@i">@(i)</a> </li>
+                <partial name="PostShortInfo" model="post"></partial>
 
-            }
+            </div>
 
-            <li class="page-item">
-                <a class="page-link" href="@ViewBag.PaginationBaseUrl=@(ViewBag.lastPage)" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
+            <br />
+            <br />
+        }
+
+        <div>
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    <li class="page-item">
+                        <a class="page-link" href="@ViewBag.PaginationBaseUrl&tab=rec&pageH=@ViewBag.HotPage&pageR=1" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    @for (int i = 1; i <= ViewBag.lastRecentPost; i++)
+                    {
+                        <li class="page-item"> <a class="page-link" href="@ViewBag.PaginationBaseUrl&tab=rec&pageH=@ViewBag.HotPage&pageR=@i">@(i)</a> </li>
+
+                    }
+
+                    <li class="page-item">
+                        <a class="page-link" href="@ViewBag.PaginationBaseUrl&tab=rec&pageH=@ViewBag.HotPage&pageR=@(ViewBag.lastRecentPost)" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+    </div>
 </div>
+
+

@@ -11,11 +11,19 @@ namespace Turtle.Models
         [Required]
         public string? Content { get; set; }
 
+        public int? PostId;
         public int? CommunityId { get; set; }
 
         public IEnumerable<SelectListItem> AvailableCommunities { get; set; } = [];
 
         public List<int> SelectedCategoryIds { get; set; } = [];
+
+        public List<string>? Files { get; set; } = [];
+
+        public List<string> ExistingFiles { get; set; } = [];
+        public List<string> FilesToDelete { get; set; } = [];
+
+
 
         public IEnumerable<SelectListItem> AvailableCategories { get; set; } = [];
 

@@ -297,6 +297,10 @@ namespace Turtle.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.PrimitiveCollection<string>("Files")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("Likes")
                         .HasColumnType("int");
 
@@ -462,7 +466,7 @@ namespace Turtle.Data.Migrations
             modelBuilder.Entity("Turtle.Models.Post", b =>
                 {
                     b.HasOne("Turtle.Models.Community", "Community")
-                        .WithMany()
+                        .WithMany("PostsCommunity")
                         .HasForeignKey("CommunityId");
 
                     b.HasOne("Turtle.Models.Post", "MotherPost")
@@ -506,13 +510,13 @@ namespace Turtle.Data.Migrations
                     b.HasOne("Turtle.Models.Post", "Post")
                         .WithMany("PostLikes")
                         .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("Turtle.Models.ApplicationUser", "User")
                         .WithMany("PostsLiked")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Post");
@@ -553,6 +557,8 @@ namespace Turtle.Data.Migrations
 
             modelBuilder.Entity("Turtle.Models.Community", b =>
                 {
+                    b.Navigation("PostsCommunity");
+
                     b.Navigation("UserCommunities");
                 });
 
