@@ -8,24 +8,44 @@
 
         <p>Created by: @Model.Creator.UserName</p>
 
-
-        @if (User.Identity.IsAuthenticated && ViewBag.IsMember == false)
+        @if (User.Identity.IsAuthenticated && ViewBag.IsMember == true && ViewBag.CurrentRole == CommunityRole.Admin)
         {
-            <a class="btn btn-success"
-               asp-action="Join"
-               asp-route-communityId="@Model.Id">
-                Join Community
+            <a class="btn btn-secondary"
+               asp-controller="Communities"
+               asp-action="Edit"
+               asp-route-id="@Model.Id">
+                Edit Community
             </a>
         }
 
-        @*if (User.Identity.IsAuthenticated && ViewBag.IsMember)
+        @if (User.Identity.IsAuthenticated && ViewBag.IsMember == true && ViewBag.CurrentRole == CommunityRole.Admin)
         {
-            <a class="btn btn-danger"
-               asp-action="Leave"
-               asp-route-communityId="@Model.Id">
-                Leave Community
-            </a>
-        }*@
+            <form method="post" asp-action="DeleteCommunity" asp-route-id="@Model.Id" class="d-inline">
+                <button type="submit" class="btn btn-warning text-dark">
+                    Delete Community
+                </button>
+            </form>
+        }
+
+        @if (User.Identity.IsAuthenticated && ViewBag.IsMember == false)
+        {
+            <form method="post" asp-action="Join" asp-route-communityId="@Model.Id" class="d-inline">
+                <button type="submit" class="btn btn-success">
+                    Join Community
+                </button>
+            </form>
+        }
+
+        @if (User.Identity.IsAuthenticated && ViewBag.IsMember == true)
+        {
+            <form method="post" asp-action="Leave" asp-route-communityId="@Model.Id" class="d-inline">
+                <button type="submit" class="btn btn-danger">
+                    Leave Community
+                </button>
+            </form>
+        }
+
+        
 
         <hr />
 
@@ -111,25 +131,48 @@
                             if (canModify && member.UserId != ViewBag.CurrentUserId)
                             {
                                 <div class="mt-2">
-                                    <a class="btn btn-sm btn-outline-warning"
-                                    asp-action="ChangeRole"
-                                    asp-route-userCommunityId="@member.Id"
-                                    asp-route-newRole="Moderator">
-                                        Make Moderator
-                                    </a>
 
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                    asp-action="ChangeRole"
-                                    asp-route-userCommunityId="@member.Id"
-                                    asp-route-newRole="Member">
-                                        Make Member
-                                    </a>
 
-                                    <a class="btn btn-sm btn-danger"
-                                    asp-action="KickMember"
-                                    asp-route-userCommunityId="@member.Id">
-                                        Kick
-                                    </a>
+                                    @if (currentRole == CommunityRole.Admin)
+                                    {
+                                        if (member.Role == CommunityRole.Member)
+                                        {
+                                            <form method="post" asp-controller="Communities" asp-action="ChangeRole" class="d-inline">
+                                                <input type="hidden" name="userCommunityId" value="@member.Id" />
+                                                <input type="hidden" name="newRole" value="Moderator" />
+                                                <button type="submit" class="btn btn-sm btn-outline-warning"> Make Moderator </button>
+                                            </form>
+                                        }
+
+                                        else if (member.Role == CommunityRole.Moderator)
+                                        {
+                                            <form method="post" asp-controller="Communities" asp-action="ChangeRole" class="d-inline">
+                                                <input type="hidden" name="userCommunityId" value="@member.Id" />
+                                                <input type="hidden" name="newRole" value="Member" />
+                                                <button type="submit" class="btn btn-sm btn-outline-warning"> Make member </button>
+                                            </form>
+                                        }
+                                    }
+
+                                    else if (currentRole == CommunityRole.Moderator && member.Role == CommunityRole.Member)
+                                    {
+                                        <form method="post" asp-controller="Communities" asp-action="ChangeRole" class="d-inline">
+
+                                            <input type="hidden" name="userCommunityId" value="@member.Id" />
+                                            <input type="hidden" name="newRole" value="Moderator" />
+
+                                            <button type="submit" class="btn btn-sm btn-outline-warning"> Make Moderator </button>
+                                        </form>
+                                    }
+
+
+                                    <form method="post" asp-controller="Communities" asp-action="KickMember" class="d-inline">
+
+                                        <input type="hidden" name="userCommunityId" value="@member.Id" />
+
+                                        <button type="submit" class="btn btn-sm btn-danger"> Kick </button>
+                                    </form>
+
                                 </div>
                             }
 
