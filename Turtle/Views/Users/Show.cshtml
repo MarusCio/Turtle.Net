@@ -339,7 +339,7 @@
                         <a class="d-flex align-items-center gap-2 text-decoration-none text-reset"
                            asp-controller="Communities"
                            asp-action="Show"
-                           asp-route-id="@community.Id">
+                           asp-route-id="@community.Community.Id">
 
                             <img src="@(community.Community.ImageUrl ?? "/images/communities/default.jpeg")"
                                  class="rounded-circle"

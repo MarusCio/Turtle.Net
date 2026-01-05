@@ -12,7 +12,7 @@ namespace Turtle.Models
         {
             using (var context = new ApplicationDbContext(serviceProvider.GetRequiredService<DbContextOptions<ApplicationDbContext>>()))
             {
-                
+
                 if (!context.Roles.Any(r => r.Name == "Admin"))
                 {
                     context.Roles.Add
@@ -26,7 +26,7 @@ namespace Turtle.Models
                         }
                     );
                 }
-               
+
                 if (!context.Roles.Any(r => r.Name == "User"))
                 {
                     context.Roles.Add
@@ -179,39 +179,39 @@ namespace Turtle.Models
                 {
                     context.Categories.AddRange
                     (
-                        new Category 
+                        new Category
                         {
                             CategoryName = "Comedy",
                             NSFW = false
                         },
 
-                        new Category 
+                        new Category
                         {
                             CategoryName = "Action",
                             NSFW = false
                         },
 
-                        new Category 
-                        { 
+                        new Category
+                        {
                             CategoryName = "Gore",
                             NSFW = true
 
                         },
 
-                        new Category 
-                        { 
+                        new Category
+                        {
                             CategoryName = "Horror",
                             NSFW = false
                         },
 
-                        new Category 
-                        { 
+                        new Category
+                        {
                             CategoryName = "Music",
                             NSFW = false
                         },
 
-                        new Category 
-                        { 
+                        new Category
+                        {
                             CategoryName = "Gaming",
                             NSFW = false
                         }
@@ -463,7 +463,161 @@ namespace Turtle.Models
 
                 }
 
+                List<int> communityIds = [];
+                if (!context.Communities.Any())
+                {
+                    context.Communities.AddRange
+                    (
 
+
+                       new Community
+                       {
+                           //Id = 1,
+                           CreatorId = "53505f86-0d28-40ef-b4de-de4410fff9a4",
+                           CommunityName = "Community 1",
+                           Description = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                           NSFW = false,
+                           CreatedAt = new DateTime(2020, 2, 5),
+
+                       },
+
+                       new Community
+                       {
+                           //Id = 2,
+                           CreatorId = "53505f86-0d28-40ef-b4de-de4410fff9a5",
+                           CommunityName = "Community 2",
+                           Description = "All about games",
+                           NSFW = false,
+                           ImageUrl = "/images/communities/default.jpeg",
+                           CreatedAt = new DateTime(2017, 1, 1),
+
+                       },
+
+                       new Community
+                       {
+                           //Id = 3,
+                           CreatorId = "53505f86-0d28-40ef-b4de-de4410fff9b4",
+                           CommunityName = "Community 3",
+                           Description = "Movies & series discussions",
+                           NSFW = false,
+                           ImageUrl = "/images/communities/bcd2f1b5-6755-48b3-8399-640d43b2995f.jpg"
+                       },
+
+                       new Community
+                       {
+                           //Id = 4,
+                           CreatorId = "53505f86-0d28-40ef-b4de-de4410fff9b5",
+                           CommunityName = "Community 4",
+                           Description = "Latest tech news",
+                           NSFW = false,
+                       },
+
+                       new Community
+                       {
+                           //Id = 5,
+                           CreatorId = "53505f86-0d28-40ef-b4de-de4410fff9a4",
+                           CommunityName = "Community 5",
+                           Description = "NSFW humor",
+                           NSFW = true,
+                           ImageUrl = "/images/communities/bcd2f1b5-6755-48b3-8399-640d43b2995f.jpg",
+                           CreatedAt = new DateTime(2025, 10, 12),
+
+                       },
+
+                       new Community
+                       {
+                           //Id = 6,
+                           CreatorId = "53505f86-0d28-40ef-b4de-de4410fff9b5",
+                           CommunityName = "Comunitatea celor buni la .net",
+                           Description = "nu e chiar asa",
+                           NSFW = true,
+                       },
+
+                        new Community
+                        {
+                            //Id = 7,
+                            CreatorId = "53505f86-0d28-40ef-b4de-de4410fff9b4",
+                            CommunityName = "bla bla bla",
+                            CreatedAt = new DateTime(2022, 1, 1),
+
+                        }
+
+
+                    );
+                    context.SaveChanges();
+
+                    communityIds = context.Communities
+                            .Select(x => x.Id)
+                            .ToList();
+
+                    context.UserCommunities.AddRange
+                    (
+                        new UserCommunity
+                        {
+                            UserId = "53505f86-0d28-40ef-b4de-de4410fff9a4",
+                            CommunityId = communityIds[0],
+                            Role = CommunityRole.Admin
+                        },
+                        new UserCommunity
+                        {
+                            UserId = "53505f86-0d28-40ef-b4de-de4410fff9b4",
+                            CommunityId = communityIds[0],
+                            Role = CommunityRole.Member
+                        },
+                        new UserCommunity
+                        {
+                            UserId = "53505f86-0d28-40ef-b4de-de4410fff9a5",
+                            CommunityId = communityIds[0],
+                            Role = CommunityRole.Moderator
+                        },
+
+                        new UserCommunity
+                        {
+                            UserId = "53505f86-0d28-40ef-b4de-de4410fff9a5",
+                            CommunityId = communityIds[1],
+                            Role = CommunityRole.Admin
+                        },
+
+                        new UserCommunity
+                        {
+                            UserId = "53505f86-0d28-40ef-b4de-de4410fff9b4",
+                            CommunityId = communityIds[2],
+                            Role = CommunityRole.Admin
+                        },
+
+                        new UserCommunity
+                        {
+                            UserId = "53505f86-0d28-40ef-b4de-de4410fff9b5",
+                            CommunityId = communityIds[3],
+                            Role = CommunityRole.Admin
+                        },
+
+                        new UserCommunity
+                        {
+                            UserId = "53505f86-0d28-40ef-b4de-de4410fff9a4",
+                            CommunityId = communityIds[4],
+                            Role = CommunityRole.Admin
+                        },
+
+                        new UserCommunity
+                        {
+                            UserId = "53505f86-0d28-40ef-b4de-de4410fff9b5",
+                            CommunityId = communityIds[5],
+                            Role = CommunityRole.Admin
+                        },
+
+                        new UserCommunity
+                        {
+                            UserId = "53505f86-0d28-40ef-b4de-de4410fff9b4",
+                            CommunityId = communityIds[6],
+                            Role = CommunityRole.Admin
+                        }
+                    );
+
+                    context.SaveChanges();
+                }
+
+                context.SaveChanges();
             }
         }
     }
