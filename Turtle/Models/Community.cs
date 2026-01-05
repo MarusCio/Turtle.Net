@@ -17,8 +17,13 @@ namespace Turtle.Models
 
         public virtual ApplicationUser? Creator { get; set; }
 
+        [StringLength(200, ErrorMessage = "Description can not have more than 200 characters!")]
+        public string? Description { get; set; }
+
         [Required(ErrorMessage = "NSFW is required!")]
         public bool NSFW { get; set; }
+
+        public string? ImageUrl { get; set; }
 
         public DateTime? CreatedAt { get; set; } = DateTime.Now;
 

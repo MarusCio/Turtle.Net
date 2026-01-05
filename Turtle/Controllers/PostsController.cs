@@ -242,14 +242,49 @@ namespace Turtle.Controllers
             return RedirectToAction("Show", new {id = post.Id});
         }
 
+        //[HttpGet]
+        //[Authorize(Roles = "Admin,User")]
+        //public IActionResult New()
+        //{
+        //    PostForm post = new PostForm();
+
+        //    post.AvailableCommunities = getAvailableCommunities();
+        //    post.AvailableCategories = getAvailableCategories();
+
+        //    return View(post);
+        //}
+
+
+        //pentru create post in comunitate
         [HttpGet]
         [Authorize(Roles = "Admin,User")]
-        public IActionResult New()
+        public IActionResult New(int? communityId)
         {
             PostForm post = new PostForm();
-
-            post.AvailableCommunities = getAvailableCommunities();
             post.AvailableCategories = getAvailableCategories();
+
+            if (communityId != null)
+            {
+                string userId = _userManager.GetUserId(User);
+
+                bool isMember = db.UserCommunities
+                    .Any(uc => uc.CommunityId == communityId && uc.UserId == userId);
+
+                if (!isMember)
+                {
+                    TempData["message"] = "You must be a member of this community to create a post.";
+                    TempData["messageType"] = "alert-danger";
+                    return RedirectToAction("Show", "Communities", new { id = communityId });
+                }
+
+                post.CommunityId = communityId.Value;
+                ViewBag.FromCommunity = true;
+            }
+            else
+            {
+                post.AvailableCommunities = getAvailableCommunities();
+                ViewBag.FromCommunity = false;
+            }
 
             return View(post);
         }

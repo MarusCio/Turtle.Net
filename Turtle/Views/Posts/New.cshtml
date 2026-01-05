@@ -52,18 +52,26 @@
                     <br />
                 </div>
 
-                <div class="form-group">
-                    <label for="CommunityId">Choose Community</label>
-                    <br />
-                    <select asp-for="CommunityId" asp-items="Model.AvailableCommunities" class="form-control">
-                        <option value="">Choose Community</option>
-                    </select>
+                @if (ViewBag.FromCommunity == true)
+                {
+                    <!-- venim din /Communities/Show -->
+                    <input type="hidden" asp-for="CommunityId" />
+                }
+                else
+                {
+                    <div class="form-group">
+                        <label asp-for="CommunityId" class="form-label">Choose Community</label>
+                        <br />
+                        <select asp-for="CommunityId"
+                                asp-items="Model.AvailableCommunities"
+                                class="form-control">
+                            <option value="">Choose Community</option>
+                        </select>
 
-                    <!-- Mesaj de validare pentru CommunityId -->
-                    <span asp-validation-for="CommunityId" class="text-danger"></span>
-
-                    <br />
-                </div>
+                        <span asp-validation-for="CommunityId" class="text-danger"></span>
+                        <br />
+                    </div>
+                }
 
                 <div class="form-group">
                     <label for="Files">Add Files</label>
