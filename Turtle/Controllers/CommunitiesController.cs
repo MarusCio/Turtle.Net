@@ -151,6 +151,11 @@ namespace Turtle.Controllers
                           .Where(p => p.CommunityId == id && p.MotherPostId == null)
                           .OrderByDescending(p => p.CreatedAt);
 
+            foreach (var post in Posts)
+            {
+                post.Liked = IsPostLiked(post.Id);
+            }
+
             //search postari comunitate
             var PostsSearch = "";
 
@@ -943,6 +948,18 @@ namespace Turtle.Controllers
         {
             ViewBag.CurrentUserId = _userManager.GetUserId(User);
             ViewBag.UserIsAdmin = User.IsInRole("Admin");
+        }
+
+        [NonAction]
+        private bool IsPostLiked(int Id)
+        {
+            PostLike? post_like = db.PostLikes
+                .Where(p => p.PostId == Id && p.UserId == _userManager.GetUserId(User))
+                .FirstOrDefault();
+
+            if (post_like == null)
+                return false;
+            return true;
         }
 
     }
