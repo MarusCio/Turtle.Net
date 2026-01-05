@@ -1,0 +1,367 @@
+﻿<div class="card mb-4 position-relative">
+    <div class="card-body">
+        @if (Model.IsCurrentUser)
+        {
+            <div class="dropdown position-absolute top-0 end-0 m-3">
+                <button class="btn btn-sm btn-light"
+                        type="button"
+                        id="profileSettingsDropdown"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                    <i class="bi bi-gear-fill"></i>
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end"
+                    aria-labelledby="profileSettingsDropdown">
+
+                    <li>
+                        <a class="dropdown-item text-info"
+                           asp-controller="Users"
+                           asp-action="Edit"
+                           asp-route-id="@Model.User.Id"
+                        >
+                            Edit Profile
+                        </a>
+                    </li>
+
+                    <li>
+                        <a  class="dropdown-item text-warning" 
+                            asp-area="Identity" 
+                            asp-page="/Account/Manage/Index" 
+                            title="Manage">
+                            Details
+                        </a>
+                    </li>
+
+                </ul>
+            </div>
+        }
+
+        <div class="d-flex align-items-start gap-4">
+
+            <!-- Profile Image -->
+            <img src="@(Model.User.ProfileImageUrl ?? "/images/profiles/default.jpeg")"
+                 alt="Profile image"
+                 class="rounded-circle"
+                 style="width:120px;height:120px;object-fit:cover;" />
+
+            <!-- Right Content -->
+            <div class="flex-grow-1">
+
+                <!-- Username + Joined -->
+                <div class="d-flex gap-2 align-items-center">
+                    <h3 class="mb-0">@Model.User.UserName</h3>
+                    <span class="text-muted">
+                        Joined @Model.User.CreatedAt?.ToString("MMMM yyyy")
+                    </span>
+                </div>
+
+                @if (!String.IsNullOrEmpty(Model.User.Description))
+                {
+                    <!-- Description -->
+                    <p class="mt-2 text-muted">
+                        @Model.User.Description
+                    </p>
+                }
+                <!-- Follow + Followers -->
+                <div class="d-flex align-items-center gap-3 mt-2">
+
+                    @if (!Model.IsCurrentUser)
+                    {
+                        <form method="post"
+                              asp-controller="Users"
+                              asp-action="ToggleFollow"
+                              asp-route-id="@Model.User.Id"
+                        >
+                            <button class="btn @(Model.IsFollowing ? "btn-outline-danger" : "btn-success")">
+                                @(Model.IsFollowing ? "Unfollow" : "Follow")
+                            </button>
+                        </form>
+                    }
+
+                    <span class="text-muted">
+                        <strong> @Model.Followers.Count </strong> Followers
+                    </span>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-3 d-flex justify-content-between" role="tablist">
+    <!-- LEFT SIDE -->
+    <div class="d-flex">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link @(ViewBag.Tab == "posts" ? "active" : "")" data-bs-toggle="tab"
+                    data-bs-target="#TabPostari" type="button" role="tab">
+                Posts
+            </button>
+        </li>
+
+        <li class="nav-item">
+            <button class="nav-link @(ViewBag.Tab == "likes" ? "active" : "")" data-bs-toggle="tab"
+                    data-bs-target="#TabLikePostari" type="button" role="tab">
+                Liked Posts
+            </button>   
+        </li>
+    </div>
+
+
+    <!-- RIGHT SIDE -->
+    <div class="d-flex">
+
+        @if (Model.IsCurrentUser)
+        {
+            <li class="nav-item">
+                <button class="nav-link @(ViewBag.Tab == "following" ? "active" : "")" data-bs-toggle="tab"
+                data-bs-target="#TabFollowing" type="button" role="tab">
+                    Following
+                </button>
+            </li>
+        }
+
+        <li class="nav-item">
+            <button class="nav-link @(ViewBag.Tab == "followers" ? "active" : "")" data-bs-toggle="tab"
+                    data-bs-target="#TabFollowers" type="button" role="tab">
+                Followers
+            </button>
+        </li>
+
+        <li class="nav-item">
+            <button class="nav-link @(ViewBag.Tab == "communities" ? "active" : "")" data-bs-toggle="tab"
+                    data-bs-target="#TabComunitati" type="button" role="tab">
+                Communities
+            </button>
+        </li>
+    </div>
+
+</ul>
+
+<div class="tab-content mt-3">
+    @* Motorul de cautare  *@
+    <form method="get">
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" placeholder="Search topics or keywords" name="search"
+                   value="@ViewBag.SearchString">
+            <button class="btn btn-outline-success" type="submit">Search</button>
+        </div>
+    </form>
+
+    <!--tabul pt postari-->
+    <div class="tab-pane fade @(ViewBag.Tab == "posts" ? "show active" : "")" id="TabPostari" role="tabpanel">
+        <h3>Posts</h3>
+
+        @foreach (var post in ViewBag.Posts)
+        {
+            <div class="card">
+
+                <partial name="PostShortInfo" model="post"></partial>
+
+            </div>
+
+            <br />
+            <br />
+        }
+
+        <div>
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    <li class="page-item">
+                        <a class="page-link"
+						   href="@(ViewBag.PaginationBaseUrl)&tab=posts&postPage=@(ViewBag.PostPage)&likedPostPage=@(ViewBag.LikedPostPage)"
+						   aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    @for (int i = 1; i <= ViewBag.lastPostPage; i++)
+                    {
+                        <li class="page-item"> 
+                            <a class="page-link"
+                               href="@(ViewBag.PaginationBaseUrl)&tab=posts&postPage=@(i)&likedPostPage=@(ViewBag.LikedPostPage)">
+                                @(i)
+                            </a> 
+                        </li>
+
+                    }
+
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="@(ViewBag.PaginationBaseUrl)&tab=posts&postPage=@(ViewBag.lastPostPage)&likedPostPage=@(ViewBag.LikedPostPage)"
+                           aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+    </div>
+
+    <!--tabul pt liked posts-->
+    <div class="tab-pane fade @(ViewBag.Tab == "likes" ? "show active" : "")" id="TabLikePostari" role="tabpanel">
+        
+        <h3>Liked Posts</h3>
+
+        @foreach (var post in ViewBag.LikedPosts)
+        {
+            <div class="card">
+
+                <partial name="PostShortInfo" model="post"></partial>
+
+            </div>
+
+            <br />
+            <br />
+        }
+
+        <div>
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="@(ViewBag.PaginationBaseUrl)&tab=likes&postPage=@(ViewBag.PostPage)&likedPostPage=@(ViewBag.LikedPostPage)"
+                           aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    @for (int i = 1; i <= ViewBag.lastLikedPostPage; i++)
+                    {
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="@(ViewBag.PaginationBaseUrl)&tab=likes&postPage@(ViewBag.PostPage)&likedPostPage=@(i)">
+                                @(i)
+                            </a>
+                        </li>
+
+                    }
+
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="@(ViewBag.PaginationBaseUrl)&tab=likes&postPage=@(ViewBag.PostPage)&likedPostPage=@(ViewBag.lastLikedPostPage)"
+                           aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+    </div>
+
+    <div class="tab-pane fade @(ViewBag.ActiveTab == "following" ? "show active" : "")" id="TabFollowing">
+        <h3>Following</h3>
+        @foreach (ApplicationUser following in Model.Following)
+        {
+            <div class="turtle-member-card">
+
+                <div class="turtle-member-main">
+                    <div class="turtle-member-info">
+                        <a class="d-flex align-items-center gap-2 text-decoration-none text-reset"
+                           asp-controller="Users"
+                           asp-action="Show"
+                           asp-route-id="@following.Id">
+
+                            <img src="@(following.ProfileImageUrl ?? "/images/profiles/default.jpeg")"
+                                 class="rounded-circle"
+                                 style="width:32px;height:32px;object-fit:cover;" />
+
+                            <strong>@following.UserName </strong>
+                        </a>
+                    </div>
+                </div>
+
+                <small class="turtle-member-meta">
+                    Joined @following.CreatedAt?.ToString("MMMM yyyy")
+                </small>
+
+            </div>
+        }
+
+    </div>
+
+    <div class="tab-pane fade @(ViewBag.ActiveTab == "followers" ? "show active" : "")" id="TabFollowers">
+        <h3>Followers</h3>
+        @foreach (ApplicationUser follower in Model.Followers)
+        {
+            <div class="turtle-member-card">
+
+                <div class="turtle-member-main">
+                    <div class="turtle-member-info">
+                        <a class="d-flex align-items-center gap-2 text-decoration-none text-reset"
+                           asp-controller="Users"
+                           asp-action="Show"
+                           asp-route-id="@follower.Id">
+
+                            <img src="@(follower.ProfileImageUrl ?? "/images/profiles/default.jpeg")"
+                                 class="rounded-circle"
+                                 style="width:32px;height:32px;object-fit:cover;" />
+
+                            <strong>@follower.UserName </strong>
+                        </a>
+                    </div>
+                </div>
+
+                <small class="turtle-member-meta">
+                    Joined @follower.CreatedAt?.ToString("MMMM yyyy")
+                </small>
+
+            </div>
+        }
+
+    </div>
+
+
+    <div class="tab-pane fade @(ViewBag.ActiveTab == "communities" ? "show active" : "")" id="TabComunitati">
+        <h3>Communities</h3>
+        @* <form method="get" class="turtle-filters mb-3">
+            <input type="hidden" name="tab" value="members" />
+            <input type="text"
+                   name="searchMembers"
+                   class="form-control turtle-filter-search"
+                   placeholder="Search by name or role"
+                   value="@ViewBag.SearchMembers" />
+
+            <button class="btn turtle-btn-outline">Search</button>
+        </form> *@
+
+
+
+        @foreach (UserCommunity community in Model.Communities)
+        {
+            <div class="turtle-member-card">
+
+                <div class="turtle-member-main">
+                    <div class="turtle-member-info">
+                        <a class="d-flex align-items-center gap-2 text-decoration-none text-reset"
+                           asp-controller="Communities"
+                           asp-action="Show"
+                           asp-route-id="@community.Id">
+
+                            <img src="@(community.Community.ImageUrl ?? "/images/communities/default.jpeg")"
+                                 class="rounded-circle"
+                                 style="width:32px;height:32px;object-fit:cover;" />
+
+                            <strong>@community.Community.CommunityName</strong>
+                        </a>
+                        <span class="turtle-role-badge @community.Role.ToString().ToLower()">
+                            @community.Role
+                        </span>
+                    </div>
+                </div>
+
+                <small class="turtle-member-meta">
+                    Joined: @community.JoinedAt
+                </small>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+</div>
+

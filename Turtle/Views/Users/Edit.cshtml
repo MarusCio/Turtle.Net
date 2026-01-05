@@ -1,0 +1,34 @@
+﻿@model Turtle.Models.ApplicationUser
+@{
+    ViewData["Title"] = "Edit Profile";
+}
+
+<h2>Edit Profile</h2>
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="UserName" class="form-label"></label>
+        <input asp-for="UserName" class="form-control" />
+        <span asp-validation-for="UserName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Profile Image</label><br />
+            <img src="@(Model.ProfileImageUrl ?? "/images/profiles/default.jpeg")" alt="Profile image" style="width:100px;height:100px;object-fit:cover;" />
+            <br />
+
+            <br />
+        <input type="file" name="profileImage" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a asp-action="Show" asp-route-id="@Model.Id" class="btn btn-secondary">Cancel</a>
+</form>
