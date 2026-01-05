@@ -1,0 +1,30 @@
+﻿
+
+@model Turtle.Models.Community
+
+<h2 class="text-danger">Delete Community</h2>
+
+<p>
+    Are you sure you want to delete
+    <strong>@Model.CommunityName</strong>?
+</p>
+
+<p class="text-danger">
+   Warning: This action will permanently delete the community and all its content
+</p>
+
+<form method="post"
+      asp-controller="Communities"
+      asp-action="DeleteCommunity"
+      asp-route-id="@Model.Id">
+
+    <button type="submit" class="btn btn-danger">
+        Yes, delete community
+    </button>
+
+    <a asp-action="Show"
+       asp-route-id="@Model.Id"
+       class="btn btn-secondary ms-2">
+        Cancel
+    </a>
+</form>

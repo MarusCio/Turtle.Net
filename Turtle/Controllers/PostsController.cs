@@ -125,17 +125,53 @@ namespace Turtle.Controllers
             return View(post);
         }
 
+        //[HttpGet]
+        //[Authorize(Roles = "Admin,User")]
+        //public IActionResult New()
+        //{
+        //    PostForm post = new PostForm();
+
+        //    post.AvailableCommunities = getAvailableCommunities();
+        //    post.AvailableCategories = getAvailableCategories();
+
+        //    return View(post);
+        //}
+
+
+        //pentru create post in comunitate
         [HttpGet]
         [Authorize(Roles = "Admin,User")]
-        public IActionResult New()
+        public IActionResult New(int? communityId)
         {
             PostForm post = new PostForm();
-
-            post.AvailableCommunities = getAvailableCommunities();
             post.AvailableCategories = getAvailableCategories();
+
+            if (communityId != null)
+            {
+                string userId = _userManager.GetUserId(User);
+
+                bool isMember = db.UserCommunities
+                    .Any(uc => uc.CommunityId == communityId && uc.UserId == userId);
+
+                if (!isMember)
+                {
+                    TempData["message"] = "You must be a member of this community to create a post.";
+                    TempData["messageType"] = "alert-danger";
+                    return RedirectToAction("Show", "Communities", new { id = communityId });
+                }
+
+                post.CommunityId = communityId.Value;
+                ViewBag.FromCommunity = true;
+            }
+            else
+            {
+                post.AvailableCommunities = getAvailableCommunities();
+                ViewBag.FromCommunity = false;
+            }
 
             return View(post);
         }
+
 
         [HttpPost]
         [Authorize(Roles = "Admin,User")]
@@ -203,7 +239,21 @@ namespace Turtle.Controllers
         [Authorize(Roles = "Admin,User")]
         public IActionResult New([FromForm] PostForm postForm)
         {
-            if (postForm.Title is null)
+            string userId = _userManager.GetUserId(User);
+
+            if (postForm.CommunityId != null)
+            {
+                bool isMember = db.UserCommunities
+                    .Any(uc => uc.CommunityId == postForm.CommunityId &&
+                               uc.UserId == userId);
+
+                if (!isMember)
+                {
+                    return Unauthorized();
+                }
+            }
+
+                if (postForm.Title is null)
             {
                 ModelState.AddModelError("Title", "The Title Field is required!");
                 postForm.AvailableCommunities = getAvailableCommunities();
@@ -238,13 +288,23 @@ namespace Turtle.Controllers
 
                 TempData["message"] = "New post created";
                 TempData["messageType"] = "alert-success";
-                return RedirectToAction("Index");
+                
             }
             else
             {
                 postForm.AvailableCommunities = getAvailableCommunities();
                 postForm.AvailableCategories = getAvailableCategories();
-                return View(post);
+                return View(postForm);
+            }
+
+
+            if (postForm.CommunityId != null)
+            {
+                return RedirectToAction("Show", "Communities", new { id = postForm.CommunityId });
+            }
+            else
+            {
+                return RedirectToAction("Index");
             }
         }
 

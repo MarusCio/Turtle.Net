@@ -2,30 +2,77 @@
 
 <br />
 
-<div class="card">
-    <div class="container mt-4">
+<div class="turtle-community-header">
+        <img src="@(Model.ImageUrl ?? "/images/communities/default.jpeg")"
+             class="turtle-community-avatar" />
+
+    <div class="turtle-community-info">
         <h2>@Model.CommunityName</h2>
+        <small>Created by @Model.Creator.UserName</small>
 
-        <p>Created by: @Model.Creator.UserName</p>
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <p> @Model.Description </p>
+        }
+        else
+        {
+            <p> No description available </p>
+        }
 
+       </div>
+</div>
 
-        @if (User.Identity.IsAuthenticated && ViewBag.IsMember == false)
+        @if (User.Identity.IsAuthenticated && ViewBag.IsMember)
         {
             <a class="btn btn-success"
-               asp-action="Join"
+               asp-controller="Posts"
+               asp-action="New"
                asp-route-communityId="@Model.Id">
-                Join Community
+                Create Post
             </a>
         }
 
-        @*if (User.Identity.IsAuthenticated && ViewBag.IsMember)
+        @if (User.Identity.IsAuthenticated && ViewBag.IsMember == true && ViewBag.CurrentRole == CommunityRole.Admin)
         {
-            <a class="btn btn-danger"
-               asp-action="Leave"
-               asp-route-communityId="@Model.Id">
-                Leave Community
+            <a class="btn btn-secondary"
+               asp-controller="Communities"
+               asp-action="Edit"
+               asp-route-id="@Model.Id">
+                Edit Community
             </a>
-        }*@
+        }
+
+        @if (User.Identity.IsAuthenticated && ViewBag.IsMember == true && ViewBag.CurrentRole == CommunityRole.Admin)
+        {
+            <form method="post" asp-action="DeleteCommunity" asp-route-id="@Model.Id" class="d-inline">
+                <button type="submit" class="btn btn-warning text-dark">
+                    Delete Community
+                </button>
+            </form>
+        }
+
+        @if (User.Identity.IsAuthenticated && ViewBag.IsMember == false)
+        {
+            <form method="post" asp-action="Join" asp-route-communityId="@Model.Id" class="d-inline">
+                <button type="submit" class="btn btn-success">
+                    Join Community
+                </button>
+            </form>
+        }
+
+        @if (User.Identity.IsAuthenticated && ViewBag.IsMember == true)
+        {
+            <form method="post" asp-action="Leave" asp-route-communityId="@Model.Id" class="d-inline">
+                <button type="submit" class="btn btn-danger">
+                    Leave Community
+                </button>
+            </form>
+        }
+
+       
+
+
+        
 
         <hr />
 
@@ -50,29 +97,79 @@
         <div class="tab-content mt-3">
 
             <!--tabul pt postari-->
-            <div class="tab-pane fade show active" id="TabPostari" role="tabpanel">
+            <div class="tab-pane fade @(ViewBag.ActiveTab == "posts" ? "show active" : "")" id="TabPostari">
                 <h3>Posts in this community</h3>
 
-                @if (!Model.PostsCommunity.Any())
+                @if (ViewBag.Posts == null || ((List<Turtle.Models.Post>)ViewBag.Posts).Count == 0)
                 {
                     <p>This community has no posts yet</p>
                 }
                 else
                 {
-                    foreach (var post in Model.PostsCommunity)
+                    <!--search posts-->
+                    <form method="get" class="turtle-filters">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="tab" value="posts" />
+
+                        <input type="text"
+                               name="searchPosts"
+                               class="form-control turtle-filter-search"
+                               placeholder="Search posts..."
+                               value="@ViewBag.SearchPosts" />
+
+                        <select name="sortPosts"
+                                class="form-select turtle-filter-sort">
+                            <option value="recent" selected="@(ViewBag.SortPosts == "recent")">
+                                Most recent
+                            </option>
+                            <option value="popular" selected="@(ViewBag.SortPosts == "popular")">
+                                Popular
+                            </option>
+                            <option value="oldest" selected="@(ViewBag.SortPosts == "oldest")">
+                                Oldest
+                            </option>
+                        </select>
+
+                        <button class="btn turtle-btn-outline turtle-filter-btn">
+                            Apply
+                        </button>
+                    </form>
+
+
+                    foreach (var post in ViewBag.Posts)
                     {
-                        <div class="card mb-3">
+                        <div class="card turtle-post-card mb-3">
                             <div class="card-body">
                                 <partial name="PostShortInfo" model="post" />
                             </div>
                         </div>
                     }
                 }
+
+                <!--paginare postari-->
+                @if (ViewBag.PostsLastPage > 1)
+                {
+                    <nav>
+                        <ul class="pagination justify-content-center">
+                            @for (int i = 1; i <= ViewBag.PostsLastPage; i++)
+                            {
+                                <li class="page-item @(ViewBag.PostsCurrentPage == i ? "active" : "")">
+                                    <a class="page-link"
+                                       href="/Communities/Show/@Model.Id?tab=posts&pagePosts=@i&sortPosts=@ViewBag.SortPosts&searchPosts=@ViewBag.SearchPosts">
+                                        @i                                        
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+
+
+
             </div>
 
             <!--tabul pt membrii-->
-            <div class="tab-pane fade" id="TabMembrii" role="tabpanel">
-
+            <div class="tab-pane fade @(ViewBag.ActiveTab == "members" ? "show active" : "")" id="TabMembrii">
                 <!-- DEBUG INFO -->
                 @* <p style="color:red">
                     Debug:<br />
@@ -81,64 +178,96 @@
                     CurrentRole: @ViewBag.CurrentRole
                 </p> *@
 
-                @foreach (var member in Model.UserCommunities)
+
+                <!--search members-->
+                <form method="get" class="turtle-filters mb-3">
+                    <input type="hidden" name="tab" value="members" />
+                    <input type="text"
+                           name="searchMembers"
+                           class="form-control turtle-filter-search"
+                           placeholder="Search by name or role"
+                           value="@ViewBag.SearchMembers" />
+
+                    <button class="btn turtle-btn-outline">Search</button>
+                </form>
+
+
+
+                @foreach (var member in ViewBag.Members)
                 {
-                    <div class="card mb-2 p-2">
+            <div class="turtle-member-card">
 
-                        <b>@member.User.UserName</b>
-                        <span class="badge bg-secondary">@member.Role</span>
+                <div class="turtle-member-main">
+                    <div class="turtle-member-info">
+                        <strong>@member.User.UserName</strong>
 
-                        @if (User.Identity.IsAuthenticated && ViewBag.IsMember)
-                        {
-                            CommunityRole currentRole = ViewBag.CurrentRole;
-                            bool canModify = false;
-
-
-                            // Admin poate modifica pe oricine
-                            if (currentRole == CommunityRole.Admin)
-                            {
-                                canModify = true;
-                            }
-
-                            // Moderator poate modifica doar membri
-                            else if (currentRole == CommunityRole.Moderator && member.Role == CommunityRole.Member)
-                            {
-                                canModify = true;
-                            }
-
-
-                            // Nu se poate modifica propriului rol
-                            if (canModify && member.UserId != ViewBag.CurrentUserId)
-                            {
-                                <div class="mt-2">
-                                    <a class="btn btn-sm btn-outline-warning"
-                                    asp-action="ChangeRole"
-                                    asp-route-userCommunityId="@member.Id"
-                                    asp-route-newRole="Moderator">
-                                        Make Moderator
-                                    </a>
-
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                    asp-action="ChangeRole"
-                                    asp-route-userCommunityId="@member.Id"
-                                    asp-route-newRole="Member">
-                                        Make Member
-                                    </a>
-
-                                    <a class="btn btn-sm btn-danger"
-                                    asp-action="KickMember"
-                                    asp-route-userCommunityId="@member.Id">
-                                        Kick
-                                    </a>
-                                </div>
-                            }
-
-                        }
-
-                        <br />
-                        <small>Joined: @member.JoinedAt</small>
+                        <span class="turtle-role-badge @member.Role.ToString().ToLower()">
+                            @member.Role
+                        </span>
                     </div>
+
+                    @if (User.Identity.IsAuthenticated && ViewBag.IsMember)
+                    {
+                        CommunityRole currentRole = ViewBag.CurrentRole;
+                        bool canModify = false;
+
+                        if (currentRole == CommunityRole.Admin)
+                            canModify = true;
+                        else if (currentRole == CommunityRole.Moderator && member.Role == CommunityRole.Member)
+                            canModify = true;
+
+                        if (canModify && member.UserId != ViewBag.CurrentUserId)
+                        {
+                            <div class="turtle-member-actions">
+
+                                @if (currentRole == CommunityRole.Admin && member.Role == CommunityRole.Member)
+                                {
+                                    <form method="post" asp-action="ChangeRole" class="d-inline">
+                                        <input type="hidden" name="userCommunityId" value="@member.Id" />
+                                        <input type="hidden" name="newRole" value="Moderator" />
+                                        <button class="btn turtle-btn-outline-sm">
+                                            Make Moderator
+                                        </button>
+                                    </form>
+                                }
+
+                                <form method="post" asp-action="KickMember" class="d-inline">
+                                    <input type="hidden" name="userCommunityId" value="@member.Id" />
+                                    <button class="btn turtle-btn-danger-sm">
+                                        Kick
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <small class="turtle-member-meta">
+                    Joined: @member.JoinedAt
+                </small>
+
+            </div>
                 }
+
+
+                @if (ViewBag.MembersLastPage > 1)
+                {
+                    <nav>
+                        <ul class="pagination justify-content-center">
+                            @for (int i = 1; i <= ViewBag.MembersLastPage; i++)
+                            {
+                                <li class="page-item @(ViewBag.MembersCurrentPage == i ? "active" : "")">
+                                    <a class="page-link"
+                                       href="/Communities/Show/@Model.Id?tab=members&pageMembers=@i">
+                                        @i
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+
+
             </div>
 
         </div>
