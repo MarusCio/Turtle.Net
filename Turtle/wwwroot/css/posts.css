@@ -1,0 +1,45 @@
+﻿.posts-page {
+    padding-top: 20px;
+}
+
+/* Tabs Hot / Recent */
+.posts-page .nav-tabs {
+    border-bottom: none;
+    margin-bottom: 20px;
+
+}
+
+.posts-page .nav-tabs .nav-link {
+    color: #ffffff;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 8px 20px;
+    margin-right: 8px;
+    background-color: #4f8f6f;
+    border: 1px solid #2f6f4e;
+    transition: all 0.2s ease;
+}
+
+.posts-page .nav-tabs .nav-link.active {
+    background-color: #2f6f4e;
+    color: #ffffff !important;
+}
+
+    .posts-page .nav-tabs .nav-link:hover {
+        background-color: #3b7f5a;
+    }
+
+/* Post cards */
+.posts-page .card {
+    border-radius: 14px;
+    border: 1px solid #e0efe7;
+    box-shadow: 0 4px 14px rgba(47, 111, 78, 0.08);
+}
+
+/* Eliminaunderline-ul pentru link activ (butonul home) */
+.turtle-nav-link.active {
+    text-decoration: none !important;
+    border-bottom: none !important;
+    background-color: rgba(47, 111, 78, 0.25);
+    color: #2f6f4e !important;
+}
