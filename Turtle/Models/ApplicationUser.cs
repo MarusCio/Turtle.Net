@@ -13,6 +13,8 @@ namespace Turtle.Models
 
         public string? ProfileImageUrl { get; set; }
 
+        public string? Description { get; set; }
+
         public virtual ICollection<UserCommunity> UserCommunities { get; set; } = [];
 
         public virtual ICollection<Post> Posts { get; set; } = [];
