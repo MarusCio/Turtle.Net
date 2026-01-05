@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using System.Formats.Tar;
 using Turtle.Data;
 using Turtle.Models;
 
@@ -21,6 +22,7 @@ namespace Turtle.Controllers
         {
             var communities = db.Communities
                              .Include(c => c.Creator)
+                             .Include(c => c.UserCommunities)
                              .OrderByDescending(c => c.CreatedAt);
 
             ViewBag.Communities = communities;
@@ -30,6 +32,63 @@ namespace Turtle.Controllers
                 ViewBag.Message = TempData["message"];
                 ViewBag.Alert = TempData["messageType"];
 
+            }
+
+            var search = "";
+
+            if(Convert.ToString(HttpContext.Request.Query["search"]) is not null)
+            {
+                search = Convert.ToString(HttpContext.Request.Query["search"]).Trim();
+
+                communities = communities
+                              .Where(c => c.CommunityName.Contains(search) ||
+                                          c.Creator.UserName.Contains(search))
+                              .OrderByDescending(c => c.CreatedAt);
+            }
+
+            ViewBag.SearchString = search;
+
+            var sort = Convert.ToString(HttpContext.Request.Query["sort"]);
+
+            if(sort=="popular")
+            {
+                communities = communities
+                              .OrderByDescending(c => c.UserCommunities.Count);
+            }
+
+            else
+            {
+                communities = communities
+                              .OrderByDescending(c => c.CreatedAt);
+            }
+
+            ViewBag.Sort = sort;
+
+            int _perPage = 3;
+            int totalItems = communities.Count();
+            var currentPage = Convert.ToInt32(HttpContext.Request.Query["page"]);
+            var offset = 0;
+
+            if(!currentPage.Equals(0))
+            {
+                offset = (currentPage - 1) * _perPage;
+            }
+
+            var paginatedCommunities = communities
+                                       .Skip(offset)
+                                       .Take(_perPage)
+                                       .ToList();
+
+            ViewBag.lastPage = Math.Ceiling((float)totalItems / (float)_perPage);
+            ViewBag.Communities = paginatedCommunities;
+
+            if (search != "")
+            {
+                ViewBag.PaginationBaseUrl = "/Communities/Index/?search=" + search + "&sort=" + sort + "&page=";
+            }
+            else
+            {
+                ViewBag.PaginationBaseUrl = "/Communities/Index/?sort=" + sort + "&page=";
             }
 
             return View();
@@ -84,7 +143,127 @@ namespace Turtle.Controllers
             ViewBag.CurrentUserId = _userManager.GetUserId(User);
             ViewBag.UserIsAdmin = User.IsInRole("Admin");
 
-            return View(community);
+            
+            var Posts = db.Posts
+                          .Include(p => p.User)
+                          .Include(p => p.PostCategories)
+                              .ThenInclude(pc => pc.Category)
+                          .Where(p => p.CommunityId == id && p.MotherPostId == null)
+                          .OrderByDescending(p => p.CreatedAt);
+
+            //search postari comunitate
+            var PostsSearch = "";
+
+            if (Convert.ToString(HttpContext.Request.Query["searchPosts"]) is not null)
+            {
+                PostsSearch = Convert.ToString(HttpContext.Request.Query["searchPosts"]).Trim();
+
+                Posts = Posts
+                              .Where(p => p.Title.Contains(PostsSearch) ||
+                                          p.Content.Contains(PostsSearch) ||
+                                          p.PostCategories.Any(pc => pc.Category.CategoryName.Contains(PostsSearch))
+                                          )
+                              .OrderByDescending(p => p.CreatedAt);
+            }
+
+            ViewBag.SearchPosts = PostsSearch;
+
+
+            //sortare postari
+            var sortPosts = Convert.ToString(HttpContext.Request.Query["sortPosts"]);
+
+            if (string.IsNullOrEmpty(sortPosts))
+            {
+                sortPosts = "recent";
+            }
+
+            if (sortPosts == "popular")
+            {
+                Posts = Posts.OrderByDescending(p => p.Likes)
+                            .ThenByDescending(p => p.CreatedAt);
+            }
+            else if (sortPosts == "oldest")
+            {
+                Posts = Posts.OrderBy(p => p.CreatedAt);
+            }
+            else 
+            {
+                Posts = Posts.OrderByDescending(p => p.CreatedAt);
+            }
+
+            ViewBag.SortPosts = sortPosts;
+
+
+            //search membrii comunitate
+            var Members = db.UserCommunities
+                            .Include(uc => uc.User)
+                            .Where(uc => uc.CommunityId == id)
+                            .OrderBy(uc => uc.JoinedAt);
+
+            var MembersSearch = "";
+
+            if (Convert.ToString(HttpContext.Request.Query["searchMembers"]) is not null)
+            {
+                MembersSearch = Convert.ToString(HttpContext.Request.Query["searchMembers"]).Trim();
+
+                Members = Members
+                              .Where(uc => uc.User.UserName.Contains(MembersSearch) ||
+                                           uc.Role.ToString().Contains(MembersSearch))
+                              .OrderByDescending(c => c.JoinedAt);
+            }
+
+            ViewBag.SearchMembers = MembersSearch;
+
+            //paginare postari comunitate
+            int _PostsPerPage = 3;
+            int TotalPosts = Posts.Count();
+            var PostsCurrentPage = Convert.ToInt32(HttpContext.Request.Query["pagePosts"]);
+            var PostsOffset = 0;
+
+            if (!PostsCurrentPage.Equals(0))
+            {
+                PostsOffset = (PostsCurrentPage - 1) * _PostsPerPage;
+            }
+
+            var paginatedPosts = Posts
+                                   .Skip(PostsOffset)
+                                   .Take(_PostsPerPage)
+                                   .ToList();
+
+            ViewBag.PostsLastPage = Math.Ceiling((float)TotalPosts / (float)_PostsPerPage);
+            ViewBag.Posts = paginatedPosts;
+
+
+            //paginarea membrii
+            int _MembersPerPage = 10;
+            int TotalMembers = Members.Count();
+            var MembersCurrentPage = Convert.ToInt32(HttpContext.Request.Query["pageMembers"]);
+            var MembersOffset = 0;
+
+            if (!MembersCurrentPage.Equals(0))
+            {
+                MembersOffset = (MembersCurrentPage - 1) * _MembersPerPage;
+            }
+
+            var paginatedMembers = Members
+                                       .OrderBy(uc => uc.JoinedAt)
+                                       .Skip(MembersOffset)
+                                       .Take(_MembersPerPage)
+                                       .ToList();
+
+            ViewBag.MembersLastPage = Math.Ceiling((float)TotalMembers / (float)_MembersPerPage);
+            ViewBag.Members = paginatedMembers;
+
+            //preluam tabul activ
+            ViewBag.ActiveTab = HttpContext.Request.Query["tab"].ToString();
+
+            if (string.IsNullOrEmpty(ViewBag.ActiveTab))
+            {
+                ViewBag.ActiveTab = "posts";
+            }
+
+
+                return View(community);
         }
 
 
@@ -98,13 +277,52 @@ namespace Turtle.Controllers
         // Se adauga comunitatea in baza de date
         [HttpPost]
         [Authorize(Roles = "User,Admin")] //user logat, admin
-        public IActionResult New(Community community)
+        public IActionResult New(Community community, IFormFile? Img)
         {
             community.CreatedAt = DateTime.Now;
 
             //preluam creatorul comunitatii
             string CreatorId = _userManager.GetUserId(User);
             community.CreatorId = CreatorId;
+
+            community.ImageUrl = "/images/communities/default.jpeg";
+            var GoodExtensions = new[] { ".jpeg", ".png", ".jpg", ".webp" };
+            const long MaxFile = 2 * 1024 * 1024; //maxim 2MB
+
+            if (Img is not null && Img.Length > 0)
+            {
+                var extension=Path.GetExtension(Img.FileName).ToLower();
+
+                //verificam tipul pozei
+                if(!GoodExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError("", "Image file not allowed!");
+                    return View(community);
+                }
+
+                //verificam marimea pozei
+                if (Img.Length>MaxFile)
+                {
+                    ModelState.AddModelError("", "Image sise must be less than 2 MB!");
+                    return View(community);
+                }
+
+                //salvam imaginea pe server
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/communities");
+
+                //creaza folderul daca nu exista
+                Directory.CreateDirectory(uploadsFolder); 
+
+                var fileName = Guid.NewGuid() + Path.GetExtension(Img.FileName);
+                var filePath = Path.Combine(uploadsFolder, fileName);
+                using var fileStream = new FileStream(filePath, FileMode.Create);
+                
+                Img.CopyTo(fileStream);
+                
+
+                //setam URL-ul imaginii in obiectul comunitate
+                community.ImageUrl = "/images/communities/" + fileName;
+            }
 
             if (ModelState.IsValid)
             {
@@ -175,7 +393,7 @@ namespace Turtle.Controllers
 
         [HttpPost]
         [Authorize(Roles = "User,Admin")]
-        public IActionResult Edit(int id, Community _community)
+        public IActionResult Edit(int id, Community _community, IFormFile? Img)
         {
             Community? community = db.Communities.Find(id);
 
@@ -198,6 +416,8 @@ namespace Turtle.Controllers
             //    return RedirectToAction("Show", new { id = id });
             //}
 
+            
+
             if (!CommunityAdmin)
             {
                 TempData["message"] = "You do not have permission to edit this community!";
@@ -205,14 +425,71 @@ namespace Turtle.Controllers
                 return RedirectToAction("Show", new { id = id });
             }
 
+            var GoodExtensions = new[] { ".jpeg", ".png", ".jpg", ".webp" };
+            const long MaxFile = 2 * 1024 * 1024; //maxim 2MB
 
-            if (ModelState.IsValid)
+            if (Img is not null && Img.Length > 0)
+            {
+
+                var extension = Path.GetExtension(Img.FileName).ToLower();
+
+                //verificam tipul pozei
+                if (!GoodExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError("", "Image file not allowed!");
+                    SetAccessRights();
+                    return View(_community);
+                }
+
+                //verificam marimea pozei
+                if (Img.Length > MaxFile)
+                {
+                    ModelState.AddModelError("", "Image sise must be less than 2 MB!");
+                    SetAccessRights();
+                    return View(_community);
+                }
+
+                //stergem poza veche daca nu e cea default
+                if (!string.IsNullOrEmpty(community.ImageUrl) &&
+                    !community.ImageUrl.Contains("default"))
+                {
+                    var oldImagePath = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "wwwroot",
+                        community.ImageUrl.TrimStart('/')
+                    );
+
+                    if (System.IO.File.Exists(oldImagePath))
+                    {
+                        System.IO.File.Delete(oldImagePath);
+                    }
+                }
+
+
+                //salvam imaginea pe server
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/communities");
+
+                //creaza folderul daca nu exista
+                Directory.CreateDirectory(uploadsFolder);
+
+                var fileName = Guid.NewGuid() + Path.GetExtension(Img.FileName);
+                var filePath = Path.Combine(uploadsFolder, fileName);
+                using var fileStream = new FileStream(filePath, FileMode.Create);
+
+                Img.CopyTo(fileStream);
+
+                community.ImageUrl = "/images/communities/" + fileName;
+            }
+
+                if (ModelState.IsValid)
             {
                 community.CommunityName = _community.CommunityName;
+                community.Description = _community.Description;
                 community.NSFW = _community.NSFW;
 
+
                 db.SaveChanges();
-                TempData["message"] = "Community updated successfully!";
+                TempData["message"] = "Community updated!";
                 TempData["messageType"] = "alert-success";
 
                 return RedirectToAction("Show", new { id = community.Id });
@@ -282,7 +559,7 @@ namespace Turtle.Controllers
 
 
             EmptyCommunity(id);
-            TempData["message"] = "The community has been deleted successfully!";
+            TempData["message"] = "The community has been deleted!";
             TempData["messageType"] = "alert-success";
             return RedirectToAction("Index");
 
@@ -364,7 +641,7 @@ namespace Turtle.Controllers
             UserCommunity.Role = newRole;
             db.SaveChanges();
 
-            TempData["message"] = "Role updated successfully!";
+            TempData["message"] = "Role updated!";
             TempData["messageType"] = "alert-success";
 
             return RedirectToAction("Show", new { id = UserCommunity.CommunityId });
@@ -432,7 +709,7 @@ namespace Turtle.Controllers
             AutoDeleteCommunity(communityId);
 
 
-            TempData["message"] = "Member removed successfully!";
+            TempData["message"] = "Member removed!";
             TempData["messageType"] = "alert-success";
             return RedirectToAction("Show", new { id = UserCommunity.CommunityId });
         }
@@ -560,7 +837,7 @@ namespace Turtle.Controllers
 
             AutoDeleteCommunity(communityId);
 
-            TempData["message"] = "You left the community successfully!";
+            TempData["message"] = "You left the community!";
             TempData["messageType"] = "alert-success";
             return RedirectToAction("Index");
         }
@@ -568,16 +845,39 @@ namespace Turtle.Controllers
 
         private void EmptyCommunity(int communityId)
         {
+
+            var community = db.Communities.Find(communityId);
+
+            if (community == null)
+                return;
+
+            //stergem imaginea (daca nu e default)
+            if (!string.IsNullOrEmpty(community.ImageUrl) &&
+                !community.ImageUrl.Contains("default"))
+            {
+                var imagePath = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    community.ImageUrl.TrimStart('/')
+                );
+
+                if (System.IO.File.Exists(imagePath))
+                {
+                    System.IO.File.Delete(imagePath);
+                }
+            }
+
             //stergem toti membrii comunitatii
             db.UserCommunities.RemoveRange(
                 db.UserCommunities.Where(uc => uc.CommunityId == communityId)
             );
+            db.SaveChanges();
 
             //stergem toate postarile comunitatii
             DeleteCommunityPosts(communityId);
+            db.SaveChanges();
 
             //stergme comunitatea
-            var community = db.Communities.Find(communityId);
             if (community != null)
             {
                 db.Communities.Remove(community);
@@ -632,7 +932,7 @@ namespace Turtle.Controllers
 
             if (!MembersExist)
             {
-                DeleteCommunity(communityId);
+                EmptyCommunity(communityId);
             }
         }
 

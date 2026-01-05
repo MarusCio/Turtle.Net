@@ -1,6 +1,6 @@
 ﻿
 <br />
-<h2 class="text-center">Afisare Comunitati</h2>
+<h2 class="text-center">All Communities</h2>
 <br />
 
 @if (ViewBag.Message != null)
@@ -12,13 +12,57 @@
 <br />
 
 
+
+<form method="GET" class="turtle-filters mb-4">
+
+    <input type="text"
+           class="form-control turtle-filter-search"
+           placeholder="Search communities or creators"
+           name="search"
+           value="@ViewBag.SearchString" />
+
+    <select name="sort" class="form-select turtle-filter-sort">
+        <option value="recent" selected="@(ViewBag.Sort != "popular")">
+            Most recent
+        </option>
+        <option value="popular" selected="@(ViewBag.Sort == "popular")">
+            Top popular
+        </option>
+    </select>
+
+    <button class="btn turtle-btn-outline turtle-filter-btn">
+        Apply
+    </button>
+
+</form>
+
+
+@if (ViewBag.LastPage > 1)
+{
+    <nav>
+        <ul class="pagination justify-content-center">
+
+            @for (int i = 1; i <= ViewBag.LastPage; i++)
+            {
+                <li class="page-item">
+                    <a class="page-link"
+                       href="@(ViewBag.PaginationBaseUrl)@i">
+                        @i
+                    </a>
+                </li>
+            }
+
+        </ul>
+    </nav>
+}
+
 @foreach (var community in ViewBag.Communities)
 {
     <div class="card">
 
         <partial name="CommunityShortInfo" model="community"></partial>
 
-        <a class="btn btn-success" asp-controller="Communities" asp-action="Show" asp-route-id="@community.Id">Afisare comunitate</a>
+        <a class="btn btn-success" asp-controller="Communities" asp-action="Show" asp-route-id="@community.Id">Show Community</a>
 
     </div>
 

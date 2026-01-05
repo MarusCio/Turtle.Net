@@ -1,10 +1,36 @@
 ﻿@model Turtle.Models.Community
 
-<div class="card-body">
+<div class="card turtle-card mb-3">
+    <div class="card-body d-flex gap-3">
 
-    <h3 class="card-title alert-success py-3 px-3 rounded-2">@Model.CommunityName</h3>
+        <img src="@(Model.ImageUrl ?? "/images/communities/default.jpeg")"
+             alt="Community image"
+             class="turtle-avatar" />
 
-    <div><i class="bi bi-person"></i>@Model.Creator.UserName</div>
+        <div class="flex-grow-1">
 
-        <span class="alert-success">@Model.CreatedAt</span>
+            <h5 class="turtle-title">@Model.CommunityName</h5>
+
+            <small class="turtle-meta">
+                <i class="bi bi-person"></i>
+                Created by @Model.Creator.UserName ·
+                @Model.CreatedAt
+            </small>
+
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <p class="turtle-description">
+                    @Model.Description
+                </p>
+            }
+            else
+            {
+                <p class="turtle-description text-muted">
+                    No description available.
+                </p>
+            }
+
+        </div>
+
+    </div>
 </div>
