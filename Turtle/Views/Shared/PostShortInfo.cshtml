@@ -85,8 +85,14 @@
     <!-- META -->
     <div class="d-flex flex-wrap gap-3 turtle-post-meta mb-2">
         <div>
-            <i class="bi bi-person-circle"></i>
-            @Model.User.UserName
+            <a class="text-decoration-none text-reset" 
+                asp-area="" asp-controller="Users" 
+                asp-action="Show" 
+                asp-route-id="@Model.UserId" >
+            
+                <i class="bi bi-person-circle"></i>
+                @Model.User.UserName
+            </a>
         </div>
 
         @if (Model.CommunityId != null)
@@ -132,13 +138,13 @@
     <div class="turtle-post-footer">
         @if (Model.Liked)
         {
-            <span class="text-danger">
+            <span class="text-success">
                 <i class="bi bi-heart-fill"></i> @Model.Likes
             </span>
         }
         else
         {
-            <span class="text-danger">
+            <span class="text-success">
                 <i class="bi bi-heart"></i> @Model.Likes
             </span>
         }

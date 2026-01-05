@@ -67,7 +67,16 @@
 
 
         <div class="d-flex justify-content-between flex-row">
-            <div><i class="bi bi-person-circle"></i> @Model.User.UserName</div>
+            <div>
+                <a class="text-decoration-none text-reset"
+                   asp-area="" asp-controller="Users"
+                   asp-action="Show"
+                   asp-route-id="@Model.UserId">
+
+                    <i class="bi bi-person-circle"></i>
+                    @Model.User.UserName
+                </a>
+            </div>
 
             @if (Model.MotherPostId == null && Model.CommunityId != null)
             {
@@ -119,7 +128,7 @@
 
                 <div class="d-inline" id="likes-of-@Model.Id">
                     <button type="submit" class="btn btn-link text-decoration-none p-0" onclick="LikePost('@Model.Id')">
-                        <i class="bi text-danger @(Model.Liked ? "bi-heart-fill" : "bi-heart")"></i>
+                        <i class="bi text-success @(Model.Liked ? "bi-heart-fill" : "bi-heart")"></i>
                     </button> 
                     <span>@Model.Likes</span>
                 </div>
@@ -221,11 +230,11 @@
                   const heartIcon = divLike.querySelector("i"); // select the <i> inside the div
 
                   if (heartIcon.classList.contains("bi-heart-fill")) {
-                        heartIcon.classList.remove("bi-heart-fill", "text-danger");
-                        heartIcon.classList.add("bi-heart", "text-danger");
+                        heartIcon.classList.remove("bi-heart-fill");
+                        heartIcon.classList.add("bi-heart");
                   } else {
                         heartIcon.classList.remove("bi-heart");
-                        heartIcon.classList.add("bi-heart-fill", "text-danger");
+                        heartIcon.classList.add("bi-heart-fill");
                   }
              }
         }
