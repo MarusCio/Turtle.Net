@@ -26,7 +26,9 @@
                         @if (ViewBag.CurrentUserId == Model.UserId)
                         {
                             <li>
-                                <form method="get" asp-controller="Posts" asp-action="Edit" asp-route-id="@Model.Id">
+                                <form method="get" asp-controller="Posts" asp-action="Edit"
+                                      asp-route-id="@Model.Id">
+                                
 
                                     <button class="dropdown-item text-info">Edit</button>
 
@@ -35,7 +37,12 @@
                         }
                        
                         <li>
-                            <form method="post" asp-controller="Posts" asp-action="Delete" asp-route-id="@Model.Id">
+                            <form method="post" asp-controller="Posts" asp-action="Delete" 
+                                  asp-route-id="@Model.Id"
+                                  asp-route-search="@Context.Request.Query["search"]"
+                                  asp-route-tab="@Context.Request.Query["tab"]"
+                                  asp-route-pageH="@Context.Request.Query["pageH"]"
+                                  asp-route-pageR="@Context.Request.Query["pageR"]">
 
                                 <button class="dropdown-item text-danger">Delete</button>
 
@@ -46,6 +53,7 @@
                 }
             </div>
         </div>
+
 
         @if (Model.MotherPostId is null) 
         {
@@ -75,13 +83,48 @@
 
         <br />
 
+        <div class="d-flex flex-row">
+            @foreach (string fileName in Model.Files)
+            {
+                <div class="file-item" style="margin-bottom: 20px;">
+                    @if (fileName.Contains(".png") || fileName.Contains(".jpg") || fileName.Contains(".jpeg"))
+                    {
+                        <!-- Imaginile sunt displayed normal -->
+                        <img src="@fileName" alt="@fileName" style="max-width: 50%;"/>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="file-gallert">
+            @foreach (string fileName in Model.Files)
+            {
+                <div class="file-item" style="margin-bottom: 20px;">
+                    @if (! (fileName.Contains(".png") || fileName.Contains(".jpg") || fileName.Contains(".jpeg")) )
+                    {
+                        <!-- Alte fisiere ca link-uri -->
+                        <p>📄 <a href="@fileName" target="_blank"> @fileName.Split("/").Last() </a></p>
+                    }
+                </div>
+            }
+        </div>
+
+        <br />
+
         <div class="d-flex justify-content-between flex-row">
             <div>
                 <i class="bi bi-chat-left-text"
                    style="cursor:pointer;"
                    onclick="toggleCommentForm('@Model.Id')"></i>
 
-                <div class="d-inline">
+                <div class="d-inline" id="likes-of-@Model.Id">
+                    <button type="submit" class="btn btn-link text-decoration-none p-0" onclick="LikePost('@Model.Id')">
+                        <i class="bi text-danger @(Model.Liked ? "bi-heart-fill" : "bi-heart")"></i>
+                    </button> 
+                    <span>@Model.Likes</span>
+                </div>
+
+                @* <div class="d-inline">
                     <form asp-action="ToggleLike" method="post" class="d-inline">
                         <input type="hidden" name="id" value="@Model.Id" />
                         <button type="submit" class="btn btn-link text-decoration-none p-0">
@@ -89,12 +132,12 @@
                         </button>
                     </form>
                     @Model.Likes
-                </div>
+                </div> *@
             </div>
 
-            <div calss = "d-inline">
+            <div class = "d-inline">
                 <i id= "arrow-@Model.Id"
-                   class="bi bi-caret-down-fill"
+                   class="bi @(Model.MotherPostId == null ? "bi-caret-up-fill" : "bi-caret-down-fill")"
                    style="cursor:pointer"
                    onclick="showComments('@Model.Id')"></i>
                 @Model.Comments.Count()
@@ -145,7 +188,7 @@
     </div>
 </div>
 
-<ul id="comments-of-@Model.Id" class="d-none list-group ms-4">
+<ul id="comments-of-@Model.Id" class="@(Model.MotherPostId == null ? "" : "d-none") list-group ms-4">
 	@foreach (var comment in Model.Comments)
 	{
         <li class="list-group-item">
@@ -157,4 +200,35 @@
 @if (@Model.MotherPostId is null)
 {
     <script src="~/js/PostInfo.js"></script>
+
+    <script>
+        async function LikePost(id) {
+             id = Number(id);
+
+             const response = await fetch('/Posts/ToggleLike', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id })
+              });
+
+             const data = await response.json();
+
+             if (data.success) {
+                  const divLike = document.getElementById(`likes-of-${id}`);
+
+                  divLike.lastElementChild.innerText = data.likes;
+
+                  const heartIcon = divLike.querySelector("i"); // select the <i> inside the div
+
+                  if (heartIcon.classList.contains("bi-heart-fill")) {
+                        heartIcon.classList.remove("bi-heart-fill", "text-danger");
+                        heartIcon.classList.add("bi-heart", "text-danger");
+                  } else {
+                        heartIcon.classList.remove("bi-heart");
+                        heartIcon.classList.add("bi-heart-fill", "text-danger");
+                  }
+             }
+        }
+    </script>
+
 }

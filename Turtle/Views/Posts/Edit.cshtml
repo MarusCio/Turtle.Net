@@ -9,7 +9,7 @@
     <div class="row">
         <div class="col-6 offset-3">
 
-            <form method="post" asp-action="Edit" asp-controller="Posts">
+            <form method="post" asp-action="Edit" asp-controller="Posts" enctype="multipart/form-data">
 
                 <input type="hidden" asp-for="EditetPostId" value="@Model.EditetPostId" />
 
@@ -38,7 +38,9 @@
                 </div>
 
                 @if (Model.IsRootPost == true)
-                {  
+                {
+                    <button type="button" class="btn btn-info" id="suggestBtn">Suggest Categories by Gemini</button>
+
                     <div class="form-group">
                         <label for="SelectedCategoryId">Choose Categories</label>
                         <br />
@@ -69,9 +71,72 @@
                         <br />
                     </div>
                 }   
+
+                @if (Model.IsRootPost == true) 
+                {
+                    <div class="form-group">
+                        @if (Model.ExistingFiles.Any())
+                        {
+                            @foreach (var file in Model.ExistingFiles)
+                            {
+                                <div class="file-row">
+                                    <a href="@(file + Model.PostId)" target="_blank">
+                                        @System.IO.Path.GetFileName(file)
+                                    </a>
+
+                                    <input type="checkbox"
+                                           name="FilesToDelete"
+                                           value="@System.IO.Path.GetFileName(file)"
+                                           class="delete-checkbox"
+                                           onchange="removeFileRow(this)" />
+
+                                    <span class="text-danger">Delete</span>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p>No files attached.</p>
+                        }
+
+                        <hr />
+
+                        <h4>Add New Files</h4>
+                        <input type="file" name="Files" multiple class="form-control" />
+                    </div>
+                }
                 <br />
-                <button class="btn btn-success" type="submit">Edit Post</button>
+                <button class="btn btn-success" type="submit">Save Changes</button>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    function removeFileRow(checkbox) {
+        if (!checkbox.checked) return;
+
+        const row = checkbox.closest('.file-row');
+        if (!row) return;
+        
+        row.style.display = "none";
+    }
+
+    document.getElementById("suggestBtn").addEventListener("click", async () => {
+        const title = document.querySelector('input[name="Title"]').value;
+        const content = document.querySelector('textarea[name="Content"]').value;
+
+        const response = await fetch('/Posts/SuggestCategories', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, content })
+        });
+
+        const data = await response.json();
+
+        // Check checkboxes for suggested categories
+        document.querySelectorAll('input[name="SelectedCategoryIds"]').forEach(cb => {
+            cb.checked = data.categories.includes(cb.nextElementSibling.innerText);
+        });
+    });
+</script>

@@ -19,6 +19,8 @@ namespace Turtle.Models
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
+        public List<string> Files { get; set; } = [];
+
         [Required]
         public string? UserId { get; set; }
         public virtual ApplicationUser? User { get; set; }

@@ -4,7 +4,14 @@
 <div class="card-body">
 
     <div class="d-flex justify-content-between flex-row">
-        <a asp-controller="Posts" asp-action="Show" asp-route-id="@Model.Id">
+        <a asp-controller="Posts" asp-action="Show" 
+           asp-route-id="@Model.Id"
+           asp-route-id="@Model.Id"
+           asp-route-search="@Context.Request.Query["search"]"
+           asp-route-tab="@Context.Request.Query["tab"]"
+           asp-route-pageH="@Context.Request.Query["pageH"]"
+           asp-route-pageR="@Context.Request.Query["pageR"]">
+
             <h3 class="card-title alert-success py-3 px-3 rounded-2 text-decoration-none">@Model.Title</h3>
         </a>
 
@@ -21,7 +28,9 @@
                     @if (ViewBag.CurrentUserId == Model.UserId)
                     {
                         <li>
-                            <form method="get" asp-controller="Posts" asp-action="Edit" asp-route-id="@Model.Id">
+                            <form method="get" asp-controller="Posts" asp-action="Edit"
+                                  asp-route-id="@Model.Id">
+                                  
 
                                 <button class="dropdown-item text-info">Edit</button>
 
@@ -30,7 +39,12 @@
                     }
 
                     <li>
-                        <form method="post" asp-controller="Posts" asp-action="Delete" asp-route-id="@Model.Id">
+                        <form method="post" asp-controller="Posts" asp-action="Delete"
+                              asp-route-id="@Model.Id"
+                              asp-route-search="@Context.Request.Query["search"]"
+                              asp-route-tab="@Context.Request.Query["tab"]"
+                              asp-route-pageH="@Context.Request.Query["pageH"]"
+                              asp-route-pageR="@Context.Request.Query["pageR"]">
 
                             <button class="dropdown-item text-danger">Delete</button>
 

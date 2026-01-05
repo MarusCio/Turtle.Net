@@ -3,39 +3,65 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Build.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Protocol.Plugins;
 using System.Diagnostics;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using Turtle.Data;
 using Turtle.Models;
+using Turtle.Services;
+
 
 namespace Turtle.Controllers
 {
     public class PostsController: Controller
     {
         private readonly ApplicationDbContext db;
+        private readonly IWebHostEnvironment _env;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly GoogleCategoryAnalysisService _categoryService;
+        private readonly long MaxBSize = 20_000_000;
 
-        public PostsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public PostsController(
+                ApplicationDbContext context, 
+                IWebHostEnvironment env, 
+                UserManager<ApplicationUser> userManager, 
+                RoleManager<IdentityRole> roleManager,
+                GoogleCategoryAnalysisService categoryService)
         {
             db = context;
+            _env = env;
             _userManager = userManager;
             _roleManager = roleManager;
+            _categoryService = categoryService;
         }
 
         public IActionResult Index()
         {
-            var posts = db.Posts
+            var hot_posts = db.Posts
                 .Include(p => p.User)
                 .Include(p => p.Community)
                 .Include(p => p.PostCategories)
                     .ThenInclude(pc => pc.Category)
                 .Where(p => p.MotherPostId == null)
+                .OrderByDescending(p => p.CreatedAt)
+                .OrderByDescending(p => p.Likes);
+            var recent_posts = db.Posts
+                .Include(p => p.User)
+                .Include(p => p.Community)
+                .Include(p => p.PostCategories)
+                    .ThenInclude(pc => pc.Category)
+                .Where(p => p.MotherPostId == null)
+                .OrderByDescending(p => p.Likes)
                 .OrderByDescending(p => p.CreatedAt);
+                
 
-            ViewBag.Posts = posts;
+            ViewBag.HottestPosts = hot_posts;
+            ViewBag.RecentPosts = recent_posts;
 
             if (TempData.ContainsKey("message"))
             {
@@ -43,11 +69,102 @@ namespace Turtle.Controllers
                 ViewBag.Alert = TempData["messageType"];
             }
 
-            foreach (var post in posts) {
-                post.Liked = IsPostLiked(post.Id);
+            var search = "";
+
+            if (Convert.ToString(HttpContext.Request.Query["search"]) != null)
+            {
+                search = Convert.ToString(HttpContext.Request.Query["search"]).Trim(); // eliminam spatiile libere 
+
+                // Cautare in Posts (Title si Content)
+                List<int> postIds = db.Posts
+                                        .Include(p => p.PostCategories)
+                                         .ThenInclude(pc => pc.Category)
+                                        .Where
+                                        (
+                                         p => p.Title.Contains(search) ||
+                                              p.Content.Contains(search)
+                                        ).Select(p => p.Id).ToList();
+
+                for (int i = 0; i < postIds.Count(); i++)
+                    postIds[i] = GetRootPost(postIds[i]).Id;
+
+                List<int> categoryPostIds = db.PostCategories
+                                    .Include(pc => pc.Category)
+                                    .Where(pc => pc.Category.CategoryName.Contains(search))                                    
+                                    .Select(pc => (int) pc.PostId).ToList();
+
+                postIds = postIds.Union(categoryPostIds).ToList();
+                    
+                hot_posts = db.Posts.Where(posts => postIds.Contains(posts.Id))
+                                      .Include(p => p.User)
+                                      .Include(p => p.Community)
+                                      .Include(p => p.PostCategories)
+                                         .ThenInclude(pc => pc.Category)
+                                      .OrderByDescending(p => p.CreatedAt)
+                                      .OrderByDescending(p => p.Likes);
+
+                recent_posts = db.Posts.Where(posts => postIds.Contains(posts.Id))
+                                      .Include(p => p.User)
+                                      .Include(p => p.Community)
+                                      .Include(p => p.PostCategories)
+                                         .ThenInclude(pc => pc.Category)
+                                      .OrderByDescending(p => p.CreatedAt)
+                                      .OrderByDescending(p => p.Likes);
             }
 
+            ViewBag.SearchString = search;
+
+            foreach (var post in hot_posts)      
+                post.Liked = IsPostLiked(post.Id);
+            foreach (var post in recent_posts)
+                post.Liked = IsPostLiked(post.Id);
+
+
             SetAccessRights();
+
+            int _perPage = 3;
+            // For Hottest Posts //
+            int totalItems = hot_posts.Count();
+            var currentHotPage = Convert.ToInt32(HttpContext.Request.Query["pageH"]);
+            var offset = 0;
+
+            if (!currentHotPage.Equals(0)) 
+                offset = (currentHotPage - 1) * _perPage;
+            
+            var paginatedPosts = hot_posts.Skip(offset).Take(_perPage).ToList();
+
+            ViewBag.lastHottestPage = Math.Ceiling((float)totalItems / (float) _perPage);
+            ViewBag.HottestPosts = paginatedPosts;
+            ViewBag.HotPage = currentHotPage;
+            // For Hottest Posts //
+
+            // For Recent Posts //
+            totalItems = recent_posts.Count();
+            var currentRecPage = Convert.ToInt32(HttpContext.Request.Query["pageR"]);
+            offset = 0;
+
+            if (!currentRecPage.Equals(0))
+                offset = (currentRecPage - 1) * _perPage;
+
+            paginatedPosts = recent_posts.Skip(offset).Take(_perPage).ToList();
+
+            ViewBag.lastRecentPost = Math.Ceiling((float)totalItems / (float)_perPage);
+            ViewBag.RecentPosts = paginatedPosts;
+            ViewBag.RecPage = currentRecPage;
+            // For Recent Posts //
+
+            var tab = HttpContext.Request.Query["tab"].ToString();
+            if (string.IsNullOrEmpty(tab)) tab = "hot";
+            ViewBag.Tab = tab;
+
+            if (search != "")
+            {
+                ViewBag.PaginationBaseUrl = "/Posts/Index/?search=" + search + "&";
+            }
+            else
+            {
+                ViewBag.PaginationBaseUrl = "/Posts/Index/?";
+            }
 
             return View();
         }
@@ -122,7 +239,7 @@ namespace Turtle.Controllers
             }
 
             SetAccessRights();
-            return View(post);
+            return RedirectToAction("Show", new {id = post.Id});
         }
 
         //[HttpGet]
@@ -172,18 +289,85 @@ namespace Turtle.Controllers
             return View(post);
         }
 
+        //[HttpPost]
+        //[Authorize(Roles = "Admin,User")]
+        //public async Task<IActionResult> ToggleLike(int Id)
+        //{
+        //    Post? post = db.Posts.Where(p => p.Id == Id).FirstOrDefault();
+
+        //    if (post is null)
+        //        return NotFound();
+
+        //    PostLike? post_like = db.PostLikes
+        //        .Where(p => p.UserId == _userManager.GetUserId(User) && p.PostId == Id)
+        //        .FirstOrDefault();
+
+        //    bool isLike = post_like is null;
+
+        //    if (post_like is null)
+        //    {
+        //        post_like = new PostLike();
+
+        //        post_like.PostId = Id;
+        //        post_like.UserId = _userManager.GetUserId(User);
+        //        post_like.LikedAt = DateTime.Now;
+
+        //        post.Likes++;
+
+        //        if (ModelState.IsValid)
+        //        {
+        //            db.PostLikes.Add(post_like);
+        //            db.Posts.Update(post);
+        //            db.SaveChanges();
+        //        }
+        //        else
+        //        {
+        //            TempData["message"] = "Cannot like current post!";
+        //            TempData["messageType"] = "alert-danger";
+        //        }
+        //    }
+        //    else
+        //    {
+        //        post.Likes--;
+
+        //        if (ModelState.IsValid)
+        //        {
+        //            db.PostLikes.Remove(post_like);
+        //            db.Posts.Update(post);
+        //            db.SaveChanges();
+        //        }
+        //        else
+        //        {
+
+        //            TempData["message"] = "Cannot unlike current post!";
+        //            TempData["messageType"] = "alert-danger";
+        //        }
+        //    }
+
+        //    Post? root = GetRootPost(Id);
+
+        //    if (root is null) return NotFound();
+
+        //    return RedirectToAction("Show", new { id = root.Id });
+        //}
+
+        
 
         [HttpPost]
         [Authorize(Roles = "Admin,User")]
-        public IActionResult ToggleLike(int Id)
+        public async Task<IActionResult> ToggleLike([FromBody] LikeRequest lr)
         {
-            Post? post = db.Posts.Where(p => p.Id == Id).FirstOrDefault();
+            int id = lr.id;
+            for (int i = 0; i < 5; i++) Console.WriteLine("<-------->");
+            Console.WriteLine(id);
+            for (int i = 0; i < 5; i++) Console.WriteLine("<-------->");
+            Post? post = db.Posts.Where(p => p.Id == id).FirstOrDefault();
 
             if (post is null)
-                return NotFound();
+                return BadRequest("No post to like");
 
             PostLike? post_like = db.PostLikes
-                .Where(p => p.UserId == _userManager.GetUserId(User) && p.PostId == Id)
+                .Where(p => p.UserId == _userManager.GetUserId(User) && p.PostId == id)
                 .FirstOrDefault();
 
             bool isLike = post_like is null;
@@ -192,7 +376,7 @@ namespace Turtle.Controllers
             {
                 post_like = new PostLike();
 
-                post_like.PostId = Id;
+                post_like.PostId = id;
                 post_like.UserId = _userManager.GetUserId(User);
                 post_like.LikedAt = DateTime.Now;
 
@@ -228,40 +412,29 @@ namespace Turtle.Controllers
                 }
             }
 
-            Post? root = GetRootPost(Id);
+            Post? root = GetRootPost(id);
 
-            if (root is null) return NotFound();
+            if (root is null) return BadRequest("No root post");
 
-            return RedirectToAction("Show", new { id = root.Id });
+            return Json(new { success = true, likes = post.Likes }); 
         }
+
 
         [HttpPost]
         [Authorize(Roles = "Admin,User")]
-        public IActionResult New([FromForm] PostForm postForm)
+        public async Task<IActionResult> New(PostForm postForm, List<IFormFile> Files)
         {
-            string userId = _userManager.GetUserId(User);
+            CategoriesResult categoryResult = await _categoryService.AnalyzeCategoriesAsync(postForm.Title, postForm.Content);
 
-            if (postForm.CommunityId != null)
+            if (categoryResult != null && categoryResult.Success)
             {
-                bool isMember = db.UserCommunities
-                    .Any(uc => uc.CommunityId == postForm.CommunityId &&
-                               uc.UserId == userId);
-
-                if (!isMember)
-                {
-                    return Unauthorized();
-                }
+                for (int i = 0; i < 5; i++) Console.WriteLine("<----------->");
+                foreach (string categorie in categoryResult.SuggestedCategoriesNames)
+                    Console.WriteLine(categorie);
+                for (int i = 0; i < 5; i++) Console.WriteLine("<----------->");
             }
 
-                if (postForm.Title is null)
-            {
-                ModelState.AddModelError("Title", "The Title Field is required!");
-                postForm.AvailableCommunities = getAvailableCommunities();
-                postForm.AvailableCategories = getAvailableCategories();
-                return View(postForm);
-            }
-            else
-                ModelState.Remove("Title");
+            postForm.Files = [];
 
             Post post = new Post();
             post.Title = postForm.Title;
@@ -270,6 +443,7 @@ namespace Turtle.Controllers
             post.CreatedAt = DateTime.Now;
             post.Likes = 0;
             post.UserId = _userManager.GetUserId(User);
+            post.Files = [];
 
             if (ModelState.IsValid)
             {
@@ -281,14 +455,9 @@ namespace Turtle.Controllers
                     PostCategory pc = new PostCategory();
                     pc.PostId = post.Id;
                     pc.CategoryId = cat;
-
                     db.PostCategories.Add(pc);
                 }
                 db.SaveChanges();
-
-                TempData["message"] = "New post created";
-                TempData["messageType"] = "alert-success";
-                
             }
             else
             {
@@ -298,19 +467,92 @@ namespace Turtle.Controllers
             }
 
 
-            if (postForm.CommunityId != null)
+            if (Files != null && Files.Count() > 0)
             {
-                return RedirectToAction("Show", "Communities", new { id = postForm.CommunityId });
+                var allowedExtensions = new[] { ".jpg", ".png", ".jpeg", ".pdf", ".txt", ".c", ".cpp", ".py", ".cs" };
+                postForm.Files = [];
+                long sum = 0;
+                foreach (IFormFile file in Files)
+                {
+                    sum += file.Length;
+                }
+                
+                if (sum > MaxBSize)
+                {
+                    ModelState.AddModelError("Files", "Files must have a combined maximum of 20 MB!");
+                    
+                    DeleteFiles(post.Id, postForm.Files);
+                    db.Posts.Remove(post);
+                    db.SaveChanges();
+                    
+                    postForm.AvailableCommunities = getAvailableCommunities();
+                    postForm.AvailableCategories = getAvailableCategories();
+                    return View(postForm);
+                }
+
+                foreach (IFormFile file in Files)
+                {
+                    string fileName = file.FileName.Replace(" ", "_");
+                    if (file.Length > 0)
+                    {
+                        var fileExtension = Path.GetExtension(fileName).ToLower();
+
+                        if (!allowedExtensions.Contains(fileExtension))
+                        {
+                            ModelState.AddModelError("Files", "Files must be a of the following extensions: (jpg, jpeg, png, pdf, txt, c, cpp, py, cs");
+
+                            DeleteFiles(post.Id, postForm.Files);
+                            db.Posts.Remove(post);
+                            db.SaveChanges();
+                            
+                            postForm.AvailableCommunities = getAvailableCommunities();
+                            postForm.AvailableCategories = getAvailableCategories();   
+                            return View(postForm);
+                        }
+
+                        //Cale Stocare
+                        var storagePath = Path.Combine(_env.ContentRootPath, "Uploads", "Posts");
+                        var finalFileName = $"{fileName}_{post.Id}{fileExtension}";
+                        var databaseFileName = $"/files/posts/{finalFileName}";
+
+                        var physicalPath = Path.Combine(storagePath, finalFileName);
+
+                        //Salvare fisiere
+                        using (var filestream = new FileStream(physicalPath, FileMode.Create))
+                        {
+                            await file.CopyToAsync(filestream);
+                        }
+
+                        postForm.Files.Add(databaseFileName);
+                    }
+                }
+
+                ModelState.Remove(nameof(postForm.Files));
+            }
+
+            if (postForm.Title is null)
+            {
+                ModelState.AddModelError("Title", "The Title Field is required!");
+                postForm.AvailableCommunities = getAvailableCommunities();
+                postForm.AvailableCategories = getAvailableCategories();
+                return View(postForm);
             }
             else
-            {
-                return RedirectToAction("Index");
-            }
+                ModelState.Remove("Title");
+
+
+            post.Files = postForm.Files;
+            db.Posts.Update(post);
+            db.SaveChanges();
+
+            TempData["message"] = "New post created";
+            TempData["messageType"] = "alert-success";
+            return RedirectToAction("Index");
         }
 
         [HttpPost]
         [Authorize(Roles = "Admin,User")]
-        public IActionResult Delete(int id)
+        public IActionResult Delete(int id, string? search, string? tab, string? pageH, string? pageR)
         {
             Post? post = db.Posts.Where(p => p.Id == id).FirstOrDefault();
 
@@ -321,6 +563,8 @@ namespace Turtle.Controllers
                 User.IsInRole("Admin"))
             {
                 DeleteComments(id);
+                DeleteFiles(post.Id, post.Files);
+
                 var postLikes = db.PostLikes.Where(x => x.PostId == id);
                 db.RemoveRange(postLikes);
                 db.Posts.Remove(post);
@@ -335,7 +579,12 @@ namespace Turtle.Controllers
                 TempData["messageType"] = "alert-danger";
             }
 
-            return RedirectToAction("Index");
+
+
+            return RedirectToAction("Index", new
+            {
+                search, tab, pageH, pageR
+            });
         }
 
         [HttpGet]
@@ -363,6 +612,8 @@ namespace Turtle.Controllers
             postForm.AvailableCategories = getAvailableCategories();
             postForm.IsRootPost = post.MotherPostId == null;
             postForm.EditetPostId = post.Id;
+            postForm.ExistingFiles = post.Files;
+            postForm.PostId = post.Id;
 
             postForm.SelectedCategoryIds = [];
             foreach (var postCategory in post.PostCategories)
@@ -374,9 +625,14 @@ namespace Turtle.Controllers
         }
 
         [HttpPost]
-        public IActionResult Edit([FromForm] PostForm postForm)
+        public async Task<IActionResult> Edit([FromForm] PostForm postForm, List<IFormFile> Files)
         {
-            Post? post = db.Posts.Find(postForm.EditetPostId);
+            postForm.Files = [];
+
+            Post? post = db.Posts
+                 .Include(p => p.PostCategories)
+                 .Where(p => p.Id == postForm.EditetPostId)
+                 .FirstOrDefault();
 
             if (post is null)
                 return NotFound();
@@ -388,8 +644,84 @@ namespace Turtle.Controllers
                 return RedirectToAction("Show", new { id = postForm.EditetPostId });
             }
 
+            if (ModelState.IsValid)
+            {
+                DeleteFiles(post.Id, postForm.FilesToDelete);
+                
+                foreach (string f in postForm.FilesToDelete)
+                {  
+                    post.Files.Remove("/files/posts/" + f);
+                }
+
+                db.Posts.Update(post);
+                db.SaveChanges();
+            }
+
             post.Title = postForm.Title;
             post.Content = postForm.Content;
+
+            if (Files.Count() > 0)
+            {
+                var allowedExtensions = new[] { ".jpg", ".png", ".jpeg", ".pdf", ".txt", ".c", ".cpp", ".py", ".cs" };
+                postForm.Files = [];
+                long sum = 0;
+                foreach (IFormFile file in Files)
+                {
+                    sum += file.Length;
+                }
+
+                if (sum > MaxBSize)
+                {
+                    ModelState.AddModelError("Files", "Files must have a combined maximum of 20 MB!");
+
+                    DeleteFiles(post.Id, postForm.Files);
+
+                    //postForm.AvailableCommunities = getAvailableCommunities();
+                    //postForm.AvailableCategories = getAvailableCategories();
+                    return View(postForm);
+                }
+
+                foreach (IFormFile file in Files)
+                {
+                    string fileName = file.FileName.Replace(" ", "_");
+                    if (file.Length > 0)
+                    {
+                        var fileExtension = Path.GetExtension(fileName).ToLower();
+
+                        if (!allowedExtensions.Contains(fileExtension))
+                        {
+                            ModelState.AddModelError("Files", "Files must be a of the following extensions: (jpg, jpeg, png, pdf, txt, c, cpp, py, cs");
+
+                            DeleteFiles(post.Id, postForm.Files);
+                            db.Posts.Remove(post);
+                            db.SaveChanges();
+
+                            postForm.AvailableCommunities = getAvailableCommunities();
+                            postForm.AvailableCategories = getAvailableCategories();
+                            return View(postForm);
+                        }
+
+                        //Cale Stocare
+                        var storagePath = Path.Combine(_env.ContentRootPath, "Uploads", "Posts");
+                        var finalFileName = $"{fileName}_{post.Id}{fileExtension}";
+                        var databaseFileName = $"/files/posts/{finalFileName}";
+
+                        var physicalPath = Path.Combine(storagePath, finalFileName);
+
+                        //Salvare fisiere
+                        using (var filestream = new FileStream(physicalPath, FileMode.Create))
+                        {
+                            await file.CopyToAsync(filestream);
+                        }
+
+                        postForm.Files.Add(databaseFileName);
+                    }
+                }
+
+                ModelState.Remove(nameof(postForm.Files));
+            }
+
+            post.Files.AddRange(postForm.Files);
 
             if (ModelState.IsValid)
             {
@@ -415,13 +747,23 @@ namespace Turtle.Controllers
             }
             else
             {
-                TempData["message"] = "You cannot edit the post!";
-                TempData["messageType"] = "alert-danger";
-                return RedirectToAction("Show", new { id = postForm.EditetPostId });
+                return View(postForm);
             }
 
             return RedirectToAction("Show", new { id = postForm.EditetPostId });
         }
+
+        [HttpPost]
+        public async Task<IActionResult> SuggestCategories([FromBody] PostForm model)
+        {
+            var result = await _categoryService.AnalyzeCategoriesAsync(model.Title, model.Content);
+
+            if (!result.Success)
+                return BadRequest(result.ErrorMessage);
+
+            return Json(new { categories = result.SuggestedCategoriesNames });
+        }
+
 
         [NonAction]
         private bool IsPostLiked(int Id)
@@ -497,6 +839,18 @@ namespace Turtle.Controllers
         }
 
         [NonAction]
+        private void DeleteFiles(int id, List<string> Files)
+        {
+            foreach (string file in Files) {
+                var storagePath = Path.Combine(_env.ContentRootPath, "Uploads", "Posts", Path.GetFileName(file));
+
+                if (System.IO.File.Exists(storagePath))
+                {
+                    System.IO.File.Delete(storagePath);
+                }
+            }
+        }
+        [NonAction]
         private void LoadComments(Post? post)
         {
             if (post is null)
@@ -547,5 +901,10 @@ namespace Turtle.Controllers
             ViewBag.CurrentUserId = _userManager.GetUserId(User);
             ViewBag.UserIsAdmin = User.IsInRole("Admin");
         }
+    }
+
+    public class LikeRequest
+    {
+        public int id { get; set; }
     }
 }

@@ -9,7 +9,7 @@
     <div class="row">
         <div class="col-6 offset-3">
 
-            <form method="post" asp-action="New" asp-controller="Posts">
+            <form enctype="multipart/form-data"  method="post" asp-action="New" asp-controller="Posts">
                 <div class="form-group">
                     <label asp-for="Title" class="form-label">Post Title</label>
                     <br />
@@ -31,6 +31,10 @@
 
                     <br /><br />
                 </div>
+
+                
+                <button type="button" class="btn btn-info" id="suggestBtn">Suggest Categories by Gemini</button>
+
 
                 <div class="form-group">
                     <label for="SelectedCategoryId">Choose Categories</label>
@@ -69,9 +73,37 @@
                     </div>
                 }
 
+                <div class="form-group">
+                    <label for="Files">Add Files</label>
+                    <input asp-for="Files" type="file" multiple class="form-control" />
+
+                    <!-- Mesaj de validare pentru imagine -->
+                    <span asp-validation-for="Files" class="text-danger"></span>
+                </div>
+
                 <br />
                 <button class="btn btn-success" type="submit">Add Post</button>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById("suggestBtn").addEventListener("click", async () => {
+        const title = document.querySelector('input[name="Title"]').value;
+        const content = document.querySelector('textarea[name="Content"]').value;
+
+        const response = await fetch('/Posts/SuggestCategories', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, content })
+        });
+
+        const data = await response.json();
+
+        // Check checkboxes for suggested categories
+        document.querySelectorAll('input[name="SelectedCategoryIds"]').forEach(cb => {
+            cb.checked = data.categories.includes(cb.nextElementSibling.innerText);
+        });
+    });
+</script>

@@ -1,5 +1,6 @@
 html {
   font-size: 14px;
+  background-color: darkseagreen;
 }
 
 @media (min-width: 768px) {
@@ -18,7 +19,7 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
@@ -39,6 +40,9 @@ body {
     background-color: rgba(0, 0, 0, 0.2);
 }
 
+html,body {
+    background-color: darkseagreen !important;
+}
 
 .turtle-card {
     border-radius: 16px;
