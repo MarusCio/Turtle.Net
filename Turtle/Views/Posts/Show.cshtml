@@ -1,13 +1,21 @@
 ﻿@model Turtle.Models.Post
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/posts.css" />
+}
+
+
 @if(ViewBag.Message != null){
 
     <h2 class="p-3 rounded-3 text-center mb-5 alert @ViewBag.Alert">@ViewBag.Message</h2>
 }
+<div class="posts-page">
 
-<div>
+    <div class="card turtle-post-card">
 
-    <partial name="PostInfo" model="@Model" />
+        <partial name="PostInfo" model="@Model" />
+
+    </div>
 
 </div>
 

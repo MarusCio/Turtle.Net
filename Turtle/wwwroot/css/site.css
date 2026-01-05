@@ -227,8 +227,92 @@ html,body {
 
 
 
+.turtle-post-title {
+    margin: 0;
+    font-weight: 600;
+    color: #2f6f4e;
+}
+
+    .turtle-post-title:hover {
+        text-decoration: underline;
+    }
+
+.turtle-post-meta {
+    font-size: 0.85rem;
+    color: #6c8f7b;
+}
+
+.turtle-post-content {
+    color: #1f3d2b;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.turtle-post-files a {
+    color: #2f6f4e;
+    text-decoration: none;
+}
+
+    .turtle-post-files a:hover {
+        text-decoration: underline;
+    }
+
+.turtle-post-footer {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+/* Turtle tabs - Hot / Recent posts */
+.posts-tabs .nav-link {
+    color: #2f6f4e;
+    font-weight: 500;
+}
+
+.posts-tabs .nav-link.active {
+    background-color: #2f6f4e;
+    color: #ffffff !important;
+    border-color: #2f6f4e #2f6f4e #ffffff;
+}
+
+posts-tabs .nav-link:hover {
+    background-color: #3b7f5a;
+    color: #ffffff;
+}
 
 
+.turtle-navbar {
+    background: rgba(47, 111, 78, 0.25);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(47, 111, 78, 0.4);
+}
+
+.turtle-logo {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2f6f4e;
+    cursor: default;
+}
+
+.turtle-nav-center {
+    gap: 20px;
+}
+
+/* LINK-URI */
+.turtle-nav-link {
+    font-weight: 500;
+    color: #1f3d2b !important;
+    padding: 6px 14px;
+    border-radius: 999px;
+    transition: all 0.2s ease;
+}
+
+    .turtle-nav-link:hover {
+        background-color: rgba(47, 111, 78, 0.15);
+        color: #2f6f4e !important;
+    }
 
 
 

@@ -1,90 +1,147 @@
 ﻿@model Turtle.Models.Post
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/posts.css" />
+}
 
 <div class="card-body">
 
-    <div class="d-flex justify-content-between flex-row">
-        <a asp-controller="Posts" asp-action="Show" 
-           asp-route-id="@Model.Id"
-           asp-route-id="@Model.Id"
-           asp-route-search="@Context.Request.Query["search"]"
-           asp-route-tab="@Context.Request.Query["tab"]"
-           asp-route-pageH="@Context.Request.Query["pageH"]"
-           asp-route-pageR="@Context.Request.Query["pageR"]">
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-start mb-2">
 
-            <h3 class="card-title alert-success py-3 px-3 rounded-2 text-decoration-none">@Model.Title</h3>
-        </a>
+        <div>
+            <a asp-controller="Posts"
+               asp-action="Show"
+               asp-route-id="@Model.Id"
+               asp-route-search="@Context.Request.Query["search"]"
+               asp-route-tab="@Context.Request.Query["tab"]"
+               asp-route-pageH="@Context.Request.Query["pageH"]"
+               asp-route-pageR="@Context.Request.Query["pageR"]"
+               class="text-decoration-none">
 
-        <div class="dropdown d-inline">
-            <i class="rounded bi bi-three-dots-vertical dropdown-toggle no-arrow option-hover"
+                <h4 class="turtle-post-title">
+                    @Model.Title
+                </h4>
+            </a>
+        </div>
+
+        <!-- MENU -->
+        <div class="dropdown">
+            <i class="bi bi-three-dots-vertical option-hover no-arrow"
                id="postMenu-@Model.Id"
-               style="cursor:pointer"
                data-bs-toggle="dropdown"
-               aria-expanded="false">
-            </i>
+               style="cursor:pointer"></i>
+
             @if (ViewBag.CurrentUserId == Model.UserId || ViewBag.UserIsAdmin)
             {
-                <ul class="dropdown-menu" aria-labelledby="postMenu-@Model.Id">
+                <ul class="dropdown-menu dropdown-menu-end"
+                    aria-labelledby="postMenu-@Model.Id">
+
                     @if (ViewBag.CurrentUserId == Model.UserId)
                     {
                         <li>
-                            <form method="get" asp-controller="Posts" asp-action="Edit"
-                                  asp-route-id="@Model.Id">
-                                  
-
-                                <button class="dropdown-item text-info">Edit</button>
-
-                            </form>
+                            <a class="dropdown-item text-info"
+                               asp-controller="Posts"
+                               asp-action="Edit"
+                               asp-route-id="@Model.Id">
+                                Edit
+                            </a>
                         </li>
                     }
 
                     <li>
-                        <form method="post" asp-controller="Posts" asp-action="Delete"
+                        <form method="post"
+                              asp-controller="Posts"
+                              asp-action="Delete"
                               asp-route-id="@Model.Id"
                               asp-route-search="@Context.Request.Query["search"]"
                               asp-route-tab="@Context.Request.Query["tab"]"
                               asp-route-pageH="@Context.Request.Query["pageH"]"
                               asp-route-pageR="@Context.Request.Query["pageR"]">
 
-                            <button class="dropdown-item text-danger">Delete</button>
-
+                            <button class="dropdown-item text-danger">
+                                Delete
+                            </button>
                         </form>
                     </li>
-
                 </ul>
             }
         </div>
     </div>
 
-    <div class="mb-3">
-        @foreach (var postCat in Model.PostCategories)
-        {
-            <span class="badge bg-secondary me-1">#@postCat.Category.CategoryName</span>
-        }
-    </div>
+    <!-- CATEGORIES -->
+    @if (Model.PostCategories.Any())
+    {
+        <div class="mb-2">
+            @foreach (var postCat in Model.PostCategories)
+            {
+                <span class="badge bg-secondary me-1">
+                    #@postCat.Category.CategoryName
+                </span>
+            }
+        </div>
+    }
 
-    <div class="d-flex justify-content-between flex-row">
-        <div><i class="bi bi-person-circle"></i> <a href="/Users/Show/@Model.UserId">@Model.User.UserName</a></div>
+    <!-- META -->
+    <div class="d-flex flex-wrap gap-3 turtle-post-meta mb-2">
+        <div>
+            <i class="bi bi-person-circle"></i>
+            @Model.User.UserName
+        </div>
 
         @if (Model.CommunityId != null)
         {
-            <div><i class="bi bi-building"></i>@Model.Community.CommunityName</div>
+            <div>
+                <i class="bi bi-building"></i>
+                @Model.Community.CommunityName
+            </div>
         }
 
-        <div><i class="bi bi-calendar"></i>@Model.CreatedAt</div>
+        <div>
+            <i class="bi bi-calendar"></i>
+            @Model.CreatedAt
+        </div>
     </div>
 
-    <br />
+    <!-- CONTENT -->
+    <div class="turtle-post-content mb-3">
+        @Model.Content
+    </div>
 
-    <div class="card-text text-truncate">@Model.Content</div>
-    
-    <br />
-    
-    @if (Model.Liked)
+    <!-- FILES -->
+    @if (Model.Files != null && Model.Files.Any())
     {
-        <div><i class="bi bi-heart-fill text-danger"></i> @Model.Likes </div>
-    } else
-    {
-        <div><i class="bi bi-heart text-danger"></i> @Model.Likes </div> 
+        <div class="turtle-post-files mb-3">
+            <strong>Attachments:</strong>
+
+            <ul class="list-unstyled mt-2">
+                @foreach (var file in Model.Files)
+                {
+                    <li>
+                        <i class="bi bi-paperclip"></i>
+                        <a href="@file" target="_blank">
+                            @System.IO.Path.GetFileName(file)
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
     }
+
+    <!-- FOOTER -->
+    <div class="turtle-post-footer">
+        @if (Model.Liked)
+        {
+            <span class="text-danger">
+                <i class="bi bi-heart-fill"></i> @Model.Likes
+            </span>
+        }
+        else
+        {
+            <span class="text-danger">
+                <i class="bi bi-heart"></i> @Model.Likes
+            </span>
+        }
+    </div>
+
 </div>

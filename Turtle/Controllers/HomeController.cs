@@ -15,7 +15,7 @@ namespace Turtle.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            return RedirectToAction("Index", "Posts");
         }
 
         public IActionResult Privacy()
