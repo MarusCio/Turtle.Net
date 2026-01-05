@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\files\posts\" />
+    <Folder Include="Uploads\Posts\" />
   </ItemGroup>
 
 </Project>

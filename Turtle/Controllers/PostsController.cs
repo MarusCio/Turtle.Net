@@ -457,9 +457,10 @@ namespace Turtle.Controllers
 
                 foreach (IFormFile file in Files)
                 {
+                    string fileName = file.FileName.Replace(" ", "_");
                     if (file.Length > 0)
                     {
-                        var fileExtension = Path.GetExtension(file.FileName).ToLower();
+                        var fileExtension = Path.GetExtension(fileName).ToLower();
 
                         if (!allowedExtensions.Contains(fileExtension))
                         {
@@ -475,11 +476,14 @@ namespace Turtle.Controllers
                         }
 
                         //Cale Stocare
-                        var storagePath = Path.Combine(_env.WebRootPath, "files", "posts", file.FileName + post.Id);
-                        var databaseFileName = "/files/posts/" + file.FileName;
+                        var storagePath = Path.Combine(_env.ContentRootPath, "Uploads", "Posts");
+                        var finalFileName = $"{fileName}_{post.Id}{fileExtension}";
+                        var databaseFileName = $"/files/posts/{finalFileName}";
+
+                        var physicalPath = Path.Combine(storagePath, finalFileName);
 
                         //Salvare fisiere
-                        using (var filestream = new FileStream(storagePath, FileMode.Create))
+                        using (var filestream = new FileStream(physicalPath, FileMode.Create))
                         {
                             await file.CopyToAsync(filestream);
                         }
@@ -644,27 +648,33 @@ namespace Turtle.Controllers
 
                 foreach (IFormFile file in Files)
                 {
+                    string fileName = file.FileName.Replace(" ", "_");
                     if (file.Length > 0)
                     {
-                        var fileExtension = Path.GetExtension(file.FileName).ToLower();
+                        var fileExtension = Path.GetExtension(fileName).ToLower();
 
                         if (!allowedExtensions.Contains(fileExtension))
                         {
                             ModelState.AddModelError("Files", "Files must be a of the following extensions: (jpg, jpeg, png, pdf, txt, c, cpp, py, cs");
 
                             DeleteFiles(post.Id, postForm.Files);
+                            db.Posts.Remove(post);
+                            db.SaveChanges();
 
-                            //postForm.AvailableCommunities = getAvailableCommunities();
-                            //postForm.AvailableCategories = getAvailableCategories();
+                            postForm.AvailableCommunities = getAvailableCommunities();
+                            postForm.AvailableCategories = getAvailableCategories();
                             return View(postForm);
                         }
 
                         //Cale Stocare
-                        var storagePath = Path.Combine(_env.WebRootPath, "files", "posts", file.FileName + post.Id);
-                        var databaseFileName = "/files/posts/" + file.FileName;
+                        var storagePath = Path.Combine(_env.ContentRootPath, "Uploads", "Posts");
+                        var finalFileName = $"{fileName}_{post.Id}{fileExtension}";
+                        var databaseFileName = $"/files/posts/{finalFileName}";
+
+                        var physicalPath = Path.Combine(storagePath, finalFileName);
 
                         //Salvare fisiere
-                        using (var filestream = new FileStream(storagePath, FileMode.Create))
+                        using (var filestream = new FileStream(physicalPath, FileMode.Create))
                         {
                             await file.CopyToAsync(filestream);
                         }
@@ -797,7 +807,7 @@ namespace Turtle.Controllers
         private void DeleteFiles(int id, List<string> Files)
         {
             foreach (string file in Files) {
-                var storagePath = Path.Combine(_env.WebRootPath, "files", "posts", Path.GetFileName(file) + id.ToString());
+                var storagePath = Path.Combine(_env.ContentRootPath, "Uploads", "Posts", Path.GetFileName(file));
 
                 if (System.IO.File.Exists(storagePath))
                 {

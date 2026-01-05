@@ -90,7 +90,7 @@
                     @if (fileName.Contains(".png") || fileName.Contains(".jpg") || fileName.Contains(".jpeg"))
                     {
                         <!-- Imaginile sunt displayed normal -->
-                        <img src="@(fileName + Model.Id.ToString())" alt="@fileName" style="max-width: 50%;"/>
+                        <img src="@fileName" alt="@fileName" style="max-width: 50%;"/>
                     }
                 </div>
             }
@@ -103,7 +103,7 @@
                     @if (! (fileName.Contains(".png") || fileName.Contains(".jpg") || fileName.Contains(".jpeg")) )
                     {
                         <!-- Alte fisiere ca link-uri -->
-                        <p>📄 <a href="@(fileName + Model.Id)" target="_blank"> @fileName.Split("/").Last() </a></p>
+                        <p>📄 <a href="@fileName" target="_blank"> @fileName.Split("/").Last() </a></p>
                     }
                 </div>
             }

@@ -43,12 +43,21 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "Uploads")),
+    RequestPath = "/files"
+});
+
+app.MapStaticAssets();
+
 app.UseRouting();
 
 app.UseAuthorization();
 
-app.MapStaticAssets();
+
 
 app.MapControllerRoute(
     name: "default",
