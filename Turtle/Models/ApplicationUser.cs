@@ -11,13 +11,14 @@ namespace Turtle.Models
 
         public DateTime? DateOfBirth { get; set; }
 
+        public string? ProfileImageUrl { get; set; }
+
         public virtual ICollection<UserCommunity> UserCommunities { get; set; } = [];
+
+        public virtual ICollection<Post> Posts { get; set; } = [];
         public virtual ICollection<PostLike> PostsLiked { get; set; } = []; 
 
-        [NotMapped]
-        public List<string> Followers { get; set; } = [];
-
-        [NotMapped]
-        public List<string> Following { get; set; } = [];
+        public virtual ICollection<UserFollow> Followers { get; set; } = [];
+        public virtual ICollection<UserFollow> Following { get; set; } = [];
     }
 }

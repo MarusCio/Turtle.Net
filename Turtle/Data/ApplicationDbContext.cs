@@ -18,6 +18,8 @@ namespace Turtle.Data
         public DbSet<Post> Posts { get; set; }
         public DbSet<PostLike> PostLikes { get; set; }
         public DbSet<PostCategory> PostCategories { get; set; }
+        public DbSet<UserFollow> UserFollows { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -69,6 +71,19 @@ namespace Turtle.Data
                 .HasOne(uc => uc.Category)
                 .WithMany(uc => uc.PostsCategory)
                 .HasForeignKey(uc => uc.CategoryId);
+
+            builder.Entity<UserFollow>()
+                .HasOne(uf => uf.Follower)
+                .WithMany(u => u.Following)
+                .HasForeignKey(uf => uf.FollowerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<UserFollow>()
+                .HasOne(uf => uf.Following)
+                .WithMany(u => u.Followers)
+                .HasForeignKey(uf => uf.FollowingId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
 
     }
