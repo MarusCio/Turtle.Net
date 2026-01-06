@@ -500,7 +500,7 @@ namespace Turtle.Models
                            CommunityName = "Community 3",
                            Description = "Movies & series discussions",
                            NSFW = false,
-                           ImageUrl = "/images/communities/bcd2f1b5-6755-48b3-8399-640d43b2995f.jpg"
+                           ImageUrl = "/images/communities/645651c1-d648-460f-86fa-27bf7e998b49.jpeg"
                        },
 
                        new Community
