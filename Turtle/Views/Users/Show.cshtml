@@ -1,4 +1,4 @@
-﻿<div class="card mb-4 position-relative">
+﻿<div class="card turtle-card turtle-profile-card mb-4 position-relative">
     <div class="card-body">
         @if (Model.IsCurrentUser)
         {
@@ -42,7 +42,7 @@
             <!-- Profile Image -->
             <img src="@(Model.User.ProfileImageUrl ?? "/images/profiles/default.jpeg")"
                  alt="Profile image"
-                 class="rounded-circle"
+                 class="turtle-profile-avatar rounded-circle"
                  style="width:120px;height:120px;object-fit:cover;" />
 
             <!-- Right Content -->
@@ -50,7 +50,7 @@
 
                 <!-- Username + Joined -->
                 <div class="d-flex gap-2 align-items-center">
-                    <h3 class="mb-0">@Model.User.UserName</h3>
+                    <h3 class="mb-0 turtle-profile-username">@Model.User.UserName</h3>
                     <span class="text-muted">
                         Joined @Model.User.CreatedAt?.ToString("MMMM yyyy")
                     </span>
@@ -59,7 +59,7 @@
                 @if (!String.IsNullOrEmpty(Model.User.Description))
                 {
                     <!-- Description -->
-                    <p class="mt-2 text-muted">
+                    <p class="mt-2 turtle-profile-description">
                         @Model.User.Description
                     </p>
                 }
@@ -90,7 +90,7 @@
     </div>
 </div>
 
-<ul class="nav nav-tabs mb-3 d-flex justify-content-between" role="tablist">
+<ul class="nav nav-tabs posts-tabs mb-3 d-flex justify-content-between" role="tablist">
     <!-- LEFT SIDE -->
     <div class="d-flex">
         <li class="nav-item" role="presentation">
@@ -141,9 +141,9 @@
 
 <div class="tab-content mt-3">
     @* Motorul de cautare  *@
-    <form method="get">
+    <form method="get" class="turtle-filters mb-4">
         <div class="input-group mb-3">
-            <input type="text" class="form-control" placeholder="Search topics or keywords" name="search"
+            <input type="text" class="form-control turtle-filter-search" placeholder="Search topics or keywords" name="search"
                    value="@ViewBag.SearchString">
             <button class="btn btn-outline-success" type="submit">Search</button>
         </div>
@@ -155,7 +155,7 @@
 
         @foreach (var post in ViewBag.Posts)
         {
-            <div class="card">
+            <div class="card turtle-post-card">
 
                 <partial name="PostShortInfo" model="post"></partial>
 
@@ -207,7 +207,7 @@
 
         @foreach (var post in ViewBag.LikedPosts)
         {
-            <div class="card">
+            <div class="card turtle-post-card">
 
                 <partial name="PostShortInfo" model="post"></partial>
 
@@ -284,7 +284,7 @@
     </div>
 
     <div class="tab-pane fade @(ViewBag.ActiveTab == "followers" ? "show active" : "")" id="TabFollowers">
-        <h3>Followers</h3>
+        <h3 class="turtle-title">Followers</h3>
         @foreach (ApplicationUser follower in Model.Followers)
         {
             <div class="turtle-member-card">

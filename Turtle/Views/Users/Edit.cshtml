@@ -3,32 +3,48 @@
     ViewData["Title"] = "Edit Profile";
 }
 
-<h2>Edit Profile</h2>
+<h2 class="text-center mt-5 turtle-title">Edit Profile</h2>
 
-<form asp-action="Edit" method="post" enctype="multipart/form-data">
-    <input type="hidden" asp-for="Id" />
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
 
-    <div class="mb-3">
-        <label asp-for="UserName" class="form-label"></label>
-        <input asp-for="UserName" class="form-control" />
-        <span asp-validation-for="UserName" class="text-danger"></span>
+            <div class="card turtle-card p-4">
+                <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="mb-3">
+                        <label asp-for="UserName" class="form-label turtle-meta"></label>
+                        <input asp-for="UserName" class="form-control" />
+                        <span asp-validation-for="UserName" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label turtle-meta"></label>
+                        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label turtle-meta">Profile Image</label><br />
+
+                            <div class="mb-3">
+                                <img src="@(Model.ProfileImageUrl ?? "/images/profiles/default.jpeg")" alt="Profile image" class="turtle-profile-avatar" />
+                                <br />
+                            </div>
+
+                            <br />
+                        <input type="file" name="profileImage" class="form-control" />
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-success">Save Changes</button>
+                        <a asp-action="Show" asp-route-id="@Model.Id" class="btn turtle-btn-outline">Cancel</a>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
     </div>
-
-    <div class="mb-3">
-        <label asp-for="Description" class="form-label"></label>
-        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-        <span asp-validation-for="Description" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Profile Image</label><br />
-            <img src="@(Model.ProfileImageUrl ?? "/images/profiles/default.jpeg")" alt="Profile image" style="width:100px;height:100px;object-fit:cover;" />
-            <br />
-
-            <br />
-        <input type="file" name="profileImage" class="form-control" />
-    </div>
-
-    <button type="submit" class="btn btn-primary">Save Changes</button>
-    <a asp-action="Show" asp-route-id="@Model.Id" class="btn btn-secondary">Cancel</a>
-</form>
+</div>

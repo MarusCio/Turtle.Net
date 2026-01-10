@@ -5,85 +5,109 @@
 
 <br />
 
+
 <div class="container mt-5">
-    <div class="row">
-        <div class="col-6 offset-3">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
 
-            <form enctype="multipart/form-data"  method="post" asp-action="New" asp-controller="Posts">
-                <div class="form-group">
-                    <label asp-for="Title" class="form-label">Post Title</label>
-                    <br />
-                    <input asp-for="Title" class="form-control" required />
+            <div class="card turtle-card p-4">
 
-                    <!-- Mesaj de validare pentru titlu -->
-                    <span asp-validation-for="Title" class="text-danger"></span>
+                <h2 class="text-center turtle-title mb-4">
+                    🐢 Create a new post
+                </h2>
 
-                    <br /><br />
-                </div>
+                <form enctype="multipart/form-data"  method="post" asp-action="New" asp-controller="Posts">
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label">Post Title</label>
+                        <br />
+                        <input asp-for="Title" class="form-control turtle-input" required />
 
-                <div class="form-group">
-                    <label asp-for="Content" class="form-label">Post Content</label>
-                    <br />
-                    <textarea asp-for="Content" class="form-control"></textarea>
+                        <!-- Mesaj de validare pentru titlu -->
+                        <span asp-validation-for="Title" class="text-danger"></span>
 
-                    <!-- Mesaj de validare pentru continut -->
-                    <span asp-validation-for="Content" class="text-danger"></span>
+                        <br /><br />
+                    </div>
 
-                    <br /><br />
-                </div>
+                    <div class="mb-3">
+                        <label asp-for="Content" class="form-label">Post Content</label>
+                        <br />
+                        <textarea asp-for="Content" class="form-control turtle-input"></textarea>
+
+                        <!-- Mesaj de validare pentru continut -->
+                        <span asp-validation-for="Content" class="text-danger"></span>
+
+                        <br /><br />
+                    </div>
 
                 
-                <button type="button" class="btn btn-info" id="suggestBtn">Suggest Categories by Gemini</button>
+                    <div class="mb-4">
+                        <button type="button" class="btn turtle-btn-outline" id="suggestBtn">🤖 Suggest Categories by Gemini</button>
+                    </div>
 
-
-                <div class="form-group">
-                    <label for="SelectedCategoryId">Choose Categories</label>
-                    <br />
-                    @foreach (var cat in Model.AvailableCategories)
-                    {
-                        <div class="form-check">
-                            <input type="checkbox"
-                                   name="SelectedCategoryIds"
-                                   value="@cat.Value"
-                                   class="form-check-input" />
-                            <label class="form-check-label">@cat.Text</label>
-                        </div>
-                    }
-                    <br />
-                </div>
-
-                @if (ViewBag.FromCommunity == true)
-                {
-                    <!-- venim din /Communities/Show -->
-                    <input type="hidden" asp-for="CommunityId" />
-                }
-                else
-                {
-                    <div class="form-group">
-                        <label asp-for="CommunityId" class="form-label">Choose Community</label>
+                    <div class="mb-4">
+                        <label for="SelectedCategoryId">Choose Categories</label>
                         <br />
-                        <select asp-for="CommunityId"
-                                asp-items="Model.AvailableCommunities"
-                                class="form-control">
-                            <option value="">Choose Community</option>
-                        </select>
 
-                        <span asp-validation-for="CommunityId" class="text-danger"></span>
+                        <div class="tutle-category-box">
+                            @foreach (var cat in Model.AvailableCategories)
+                            {
+                                <div class="form-check">
+                                    <input type="checkbox"
+                                           name="SelectedCategoryIds"
+                                           value="@cat.Value"
+                                           class="form-check-input" />
+                                    <label class="form-check-label">@cat.Text</label>
+                                </div>
+                            }
+                        </div>
                         <br />
                     </div>
-                }
 
-                <div class="form-group">
-                    <label for="Files">Add Files</label>
-                    <input asp-for="Files" type="file" multiple class="form-control" />
+                    @if (ViewBag.FromCommunity == true)
+                    {
+                        <!-- venim din /Communities/Show -->
+                        <input type="hidden" asp-for="CommunityId" />
+                    }
+                    else
+                    {
+                        <div class="mb-4">
+                            <label asp-for="CommunityId" class="form-label">Choose Community</label>
+                            <br />
+                            <select asp-for="CommunityId"
+                                    asp-items="Model.AvailableCommunities"
+                                    class="form-control tutle-input">
+                                <option value="">Choose Community</option>
+                            </select>
 
-                    <!-- Mesaj de validare pentru imagine -->
-                    <span asp-validation-for="Files" class="text-danger"></span>
-                </div>
+                            <span asp-validation-for="CommunityId" class="text-danger"></span>
+                            <br />
+                        </div>
+                    }
 
-                <br />
-                <button class="btn btn-success" type="submit">Add Post</button>
-            </form>
+                    <div class="mb-4">
+                        <label for="Files">Add Files</label>
+                        <input asp-for="Files" type="file" multiple class="form-control turtle-input" />
+
+                        <!-- Mesaj de validare pentru imagine -->
+                        <span asp-validation-for="Files" class="text-danger"></span>
+                    </div>
+
+                    <br />
+
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-controller="Posts"
+                           asp-action="Index"
+                           class="btn turtle-btn-outline">
+                            Cancel
+                        </a>
+
+                        <button class="btn turtle-btn-primary" type="submit">Add Post</button>
+
+                    </div>
+
+                </form>
+            </div>
         </div>
     </div>
 </div>

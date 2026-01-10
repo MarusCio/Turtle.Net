@@ -6,59 +6,80 @@
 <br />
 
 <div class="container mt-5">
-    <div class="row">
-        <div class="col-6 offset-3">
-
-            <form method="post" asp-action="New" enctype="multipart/form-data" asp-controller="Communities">
-
-                <div asp-validation-summary="All" class="text-danger"></div>
-
-                <div class="form-group">
-                    <label asp-for="CommunityName" class="form-label">Nume comunitate</label>
-                    <br />
-                    <input asp-for="CommunityName" class="form-control" />
-
-                    <!-- Mesaj de validare pentru numele comunitatii -->
-                    <span asp-validation-for="CommunityName" class="text-danger"></span>
-
-                    <br /><br />
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="Description" class="form-label">Description</label>
-                    <br />
-                    <textarea asp-for="Description" class="form-control"></textarea>
-
-                    <br /><br />
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="NSFW" class="form-label">NSFW</label>
-                    <br />
-                    <textarea asp-for="NSFW" class="form-control"></textarea>
-
-                    <!-- Mesaj de validare pentru NSFW -->
-                    <span asp-validation-for="NSFW" class="text-danger"></span>
-
-                    <br /><br />
-                </div>
-
-                <div class="form-group">
-                    <label>Community image</label>
-                    <input type="file" name="Img" class="form-control"/>
-
-                    <!-- Mesaj de validare pentru imagine -->
-                    <span asp-validation-for="ImageUrl" class="text-danger"></span>
-
-                    <br /><br />
-                </div>
+    <div class="row justify-content-center">
+        <div class="col-md-7">
 
 
+            <div class="card turtle-card p-4">
+
+                <h2 class="text-center turtle-title mb-4">
+                    🐢 Create a new community
+                </h2>
+
+                <form method="post" asp-action="New" enctype="multipart/form-data" asp-controller="Communities">
+
+                    <div asp-validation-summary="All" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="CommunityName" class="form-label">Community name</label>
+                        <br />
+                        <input asp-for="CommunityName" class="form-control turtle-input" />
+
+                        <!-- Mesaj de validare pentru numele comunitatii -->
+                        <span asp-validation-for="CommunityName" class="text-danger"></span>
+
+                        <br /><br />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Description</label>
+                        <br />
+                        <textarea asp-for="Description" class="form-control turtle-input"></textarea>
+
+                        <br /><br />
+                    </div>
+
+                    <div class="mb-3 forn-check">
+                        <input asp-for="NSFW" class="form-check-input" type="checkbox" />
+                        <label asp-for="NSFW" class="form-check-label">Mark as NSFW</label>
+                        <br />
+
+                        <!-- Mesaj de validare pentru NSFW -->
+                        <span asp-validation-for="NSFW" class="text-danger"></span>
+
+                        <br /><br />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Community image</label>
+                        <input type="file" name="Img" class="form-control turtle-input"/>
+
+                        <small class="text-muted">JPEG, JPG, PNG, WEBP – max 2MB </small>
+                        <br />
+
+                        <!-- Mesaj de validare pentru imagine -->
+                        <span asp-validation-for="ImageUrl" class="text-danger small"></span>
+
+                        <br /><br />
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-controller="Communities"
+                           asp-action="Index"
+                           class="btn turtle-btn-outline">
+                            Cancel
+                        </a>
+
+                        <button class="btn turtle-btn-primary"
+                                type="submit">
+                            Create Community
+                        </button>
+                    </div>
                 
-                <br />
-                <button class="btn btn-success" type="submit">Add Community</button>
+                    
+                </form>
 
-            </form>
+            </div>
         </div>
     </div>
 </div>
