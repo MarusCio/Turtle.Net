@@ -277,7 +277,7 @@ html,body {
     border-color: #2f6f4e #2f6f4e #ffffff;
 }
 
-posts-tabs .nav-link:hover {
+.posts-tabs .nav-link:hover {
     background-color: #3b7f5a;
     color: #ffffff;
 }
@@ -309,10 +309,92 @@ posts-tabs .nav-link:hover {
     transition: all 0.2s ease;
 }
 
-    .turtle-nav-link:hover {
-        background-color: rgba(47, 111, 78, 0.15);
-        color: #2f6f4e !important;
-    }
+.turtle-nav-link:hover {
+    background-color: rgba(47, 111, 78, 0.15);
+    color: #2f6f4e !important;
+}
 
 
+/* Create Community */
 
+.turtle-input {
+    border-radius: 10px;
+    border: 1px solid #d7eadf;
+}
+
+.turtle-input:focus {
+    border-color: #2f6f4e;
+    box-shadow: 0 0 0 0.15rem rgba(47, 111, 78, 0.25);
+}
+
+.turtle-btn-primary {
+    background-color: #2f6f4e;
+    color: white;
+    border-radius: 999px;
+    padding: 8px 22px;
+    border: none;
+}
+
+.turtle-btn-primary:hover {
+    background-color: #255a3f;
+}
+
+.turtle-btn-outline {
+    border: 1px solid #2f6f4e;
+    color: #2f6f4e;
+    border-radius: 999px;
+    padding: 8px 22px;
+    background: transparent;
+}
+
+.turtle-btn-outline:hover {
+    background-color: #e6f2ec;
+} 
+
+/* Create Post */
+
+.turtle-category-box {
+    padding: 12px;
+    border-radius: 12px;
+    background: #f6fbf8;
+    border: 1px solid #d7eadf;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.turtle-category-box .form-check {
+    margin-bottom: 6px;
+}
+
+/* Profile page */
+
+.turtle-profile-card {
+    padding: 24px;
+}
+
+.turtle-profile-avatar {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border: 4px solid #e6f2ec;
+}
+
+.turtle-profile-username {
+    color: #2f6f4e;
+    font-weight: 600;
+}
+
+.turtle-profile-description {
+    color: #6c8f7b;
+    max-width: 600px;
+}
+
+/* Edit profile */
+
+.turtle-profile-avatar {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid #e6f2ec;
+}
